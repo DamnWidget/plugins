@@ -335,6 +335,10 @@ var KiteIncoming = {
 
 };
 
+var kiteInstalled = function() {
+  var ls = child_process.spawnSync('ls', ['/Applications/Kite.app']);
+  return ls.stdout.length != 0;
+}
 
 module.exports = {
   outgoing: KiteOutgoing,
@@ -348,5 +352,9 @@ module.exports = {
 
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
+
+    if (!kiteInstalled()) {
+      console.log("kite not installed!");
+    }
   },
 };
