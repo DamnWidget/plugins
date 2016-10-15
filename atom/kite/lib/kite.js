@@ -354,7 +354,9 @@ module.exports = {
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
     if (!kiteInstalled()) {
-      console.log("kite not installed!");
+      if (confirm("Would you like to install Kite?")) {
+          console.log("user clicked ok");
+      }
     }
   },
 };
