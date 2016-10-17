@@ -7,6 +7,7 @@ var fs = require('fs');
 var child_process = require('child_process');
 var process = require('process');
 var http = require('http');
+var os = require('os');
 
 var DEBUG = false;
 
@@ -349,7 +350,6 @@ var getKite = function() {
     }
     var file = fs.createWriteStream('/Applications/Kite.zip');
     file.on('finish', function() {
-      console.log("file finished downloading");
       child_process.spawnSync('unzip', ['/Applications/Kite.zip', '-d', '/Applications/']);
       child_process.spawnSync('open', ['-a', '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app']);
       child_process.spawnSync('rm', ['/Applications/Kite.zip']);
@@ -373,7 +373,7 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    if (!kiteInstalled()) {
+    if (os.platform() === 'darwin' && !kiteInstalled()) {
       if (confirm("Would you like to install Kite?")) {
           getKite();
       }
