@@ -6,6 +6,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 var child_process = require('child_process');
 var process = require('process');
+var http = require('http');
 
 var DEBUG = false;
 
@@ -338,7 +339,26 @@ var KiteIncoming = {
 var kiteInstalled = function() {
   var ls = child_process.spawnSync('ls', ['/Applications/Kite.app']);
   return ls.stdout.length != 0;
-}
+};
+
+var getKite = function() {
+  http.get('http://test-3.kite.com:9090/release/zipfile', function(res) {
+    if (res.statusCode !== 200) {
+      alert(`Got invalid status code: ${res.statusCode}`);
+      return;
+    }
+    var file = fs.createWriteStream('/Applications/Kite.zip');
+    file.on('finish', function() {
+      console.log("file finished downloading");
+      child_process.spawnSync('unzip', ['/Applications/Kite.zip', '-d', '/Applications/']);
+      child_process.spawnSync('open', ['-a', '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app']);
+      child_process.spawnSync('rm', ['/Applications/Kite.zip']);
+    });
+    res.pipe(file);
+  }).on('error', function(e) {
+    alert(`Got error: ${e.message}`);
+  });
+};
 
 module.exports = {
   outgoing: KiteOutgoing,
@@ -355,7 +375,7 @@ module.exports = {
 
     if (!kiteInstalled()) {
       if (confirm("Would you like to install Kite?")) {
-          console.log("user clicked ok");
+          getKite();
       }
     }
   },
