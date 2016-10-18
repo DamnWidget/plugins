@@ -6,7 +6,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 var child_process = require('child_process');
 var process = require('process');
-var http = require('http');
+var https = require('https');
 var os = require('os');
 
 var DEBUG = false;
@@ -342,17 +342,27 @@ var kiteInstalled = function() {
   return ls.stdout.length != 0;
 };
 
-var getKite = function() {
-  http.get('http://test-3.kite.com:9090/release/zipfile', function(res) {
+var getKite = function(url) {
+  https.get(url, function(res) {
+    if (res.statusCode === 303) {
+      return getKite(res.headers.location);
+    }
     if (res.statusCode !== 200) {
       alert(`Got invalid status code: ${res.statusCode}`);
       return;
     }
-    var file = fs.createWriteStream('/Applications/Kite.zip');
+    var appsPath = '/Applications/';
+    var dmgPath = '/Applications/Kite.dmg';
+    var mountedPath = '/Volumes/Kite'
+    var mountedAppPath = '/Volumes/Kite/Kite.app'
+    var sidebarPath = '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app';
+    var file = fs.createWriteStream(dmgPath);
     file.on('finish', function() {
-      child_process.spawnSync('unzip', ['/Applications/Kite.zip', '-d', '/Applications/']);
-      child_process.spawnSync('open', ['-a', '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app']);
-      child_process.spawnSync('rm', ['/Applications/Kite.zip']);
+      child_process.spawnSync('hdiutil', ['attach', dmgPath]);
+      child_process.spawnSync('cp', ['-r', mountedAppPath, appsPath]);
+      child_process.spawnSync('hdiutil', ['detach', mountedPath]);
+      child_process.spawnSync('open', ['-a', sidebarPath]);
+      child_process.spawnSync('rm', [dmgPath]);
     });
     res.pipe(file);
   }).on('error', function(e) {
@@ -375,7 +385,7 @@ module.exports = {
 
     if (os.platform() === 'darwin' && !kiteInstalled()) {
       if (confirm("Would you like to install Kite?")) {
-          getKite();
+          getKite('https://alpha.kite.com/release/dls/mac/current');
       }
     }
   },
