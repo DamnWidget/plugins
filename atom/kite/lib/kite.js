@@ -9,6 +9,8 @@ var process = require('process');
 var https = require('https');
 var os = require('os');
 
+var CreateAccountForm = require('./create-account-form.js');
+
 var DEBUG = false;
 
 // PLUGIN_ID identifies this plugin so that Kite can send messages back to
@@ -342,13 +344,13 @@ var kiteInstalled = function() {
   return ls.stdout.length != 0;
 };
 
-var getKite = function(url) {
+var getKite = function(url, finish) {
   https.get(url, function(res) {
     if (res.statusCode === 303) {
-      return getKite(res.headers.location);
+      return getKite(res.headers.location, finish);
     }
     if (res.statusCode !== 200) {
-      alert(`Got invalid status code: ${res.statusCode}`);
+      alert(`Got invalid status code: ${ res.statusCode }`);
       return;
     }
     var appsPath = '/Applications/';
@@ -363,17 +365,24 @@ var getKite = function(url) {
       child_process.spawnSync('hdiutil', ['detach', mountedPath]);
       child_process.spawnSync('open', ['-a', sidebarPath]);
       child_process.spawnSync('rm', [dmgPath]);
+      if (finish) {
+        finish();
+      }
     });
     res.pipe(file);
   }).on('error', function(e) {
-    alert(`Got error: ${e.message}`);
+    alert(`Got error: ${ e.message }`);
   });
 };
 
 module.exports = {
   outgoing: KiteOutgoing,
   incoming: KiteIncoming,
-  activate: function() {
+
+  createAccountForm: null,
+  formPanel: null,
+
+  activate: function(state) {
     this.incoming.initialize();
     // observeTextEditors takes a callback that fires whenever a new
     // editor window is created. We use this to call "observeEditor",
@@ -383,10 +392,41 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
+    this.createAccountForm = new CreateAccountForm(
+      state.createAccountFormState,
+      this.submit.bind(this),
+      this.hideForm.bind(this)
+    );
+
+    this.formPanel = atom.workspace.addRightPanel({
+      item: this.createAccountForm.getElement(),
+      visible: true,
+    });
+  },
+
+  deactivate: function() {
+    this.formPanel.destroy();
+  },
+
+  serialize: function() {
+    return {
+      createAccountFormState: this.createAccountForm.serialize(),
+    };
+  },
+
+  submit: function() {
     if (os.platform() === 'darwin' && !kiteInstalled()) {
-      if (confirm("Would you like to install Kite?")) {
-          getKite('https://alpha.kite.com/release/dls/mac/current');
-      }
+      getKite(
+        'https://alpha.kite.com/release/dls/mac/current',
+        this.hideForm.bind(this)
+      );
+    } else {
+      alert("Could not install Kite!");
+      this.hideForm();
     }
+  },
+
+  hideForm: function() {
+    this.formPanel.hide();
   },
 };
