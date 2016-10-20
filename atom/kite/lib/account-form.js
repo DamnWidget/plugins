@@ -1,5 +1,3 @@
-var https = require('https');
-
 var Form = class {
   constructor(state, submit, close) {
     this.element = document.createElement('div');
@@ -10,12 +8,12 @@ var Form = class {
     let email = document.createElement('input');
     email.type = 'email';
     email.name = 'email';
-    email.placeholder = 'Email'
+    email.placeholder = 'Email';
     email.tabIndex = 0;
     form.appendChild(email);
     let password = document.createElement('input');
     password.type = 'password';
-    password.placeholder = 'Password'
+    password.placeholder = 'Password';
     password.name = 'password';
     password.tabIndex = 0;
     form.appendChild(password);

@@ -1,4 +1,3 @@
-// Contents of this plugin will be reset by Kite on start. Changes you make
 // are not guaranteed to persist.
 
 var dgram = require('dgram');
@@ -9,7 +8,8 @@ var process = require('process');
 var https = require('https');
 var os = require('os');
 
-var CreateAccountForm = require('./create-account-form.js');
+var Installer = require('./installer.js');
+var AccountForm = require('./account-form.js');
 
 var DEBUG = false;
 
@@ -339,47 +339,11 @@ var KiteIncoming = {
 
 };
 
-var kiteInstalled = function() {
-  var ls = child_process.spawnSync('ls', ['/Applications/Kite.app']);
-  return ls.stdout.length != 0;
-};
-
-var getKite = function(url, finish) {
-  https.get(url, function(res) {
-    if (res.statusCode === 303) {
-      return getKite(res.headers.location, finish);
-    }
-    if (res.statusCode !== 200) {
-      alert(`Got invalid status code: ${ res.statusCode }`);
-      return;
-    }
-    var appsPath = '/Applications/';
-    var dmgPath = '/Applications/Kite.dmg';
-    var mountedPath = '/Volumes/Kite'
-    var mountedAppPath = '/Volumes/Kite/Kite.app'
-    var sidebarPath = '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app';
-    var file = fs.createWriteStream(dmgPath);
-    file.on('finish', function() {
-      child_process.spawnSync('hdiutil', ['attach', dmgPath]);
-      child_process.spawnSync('cp', ['-r', mountedAppPath, appsPath]);
-      child_process.spawnSync('hdiutil', ['detach', mountedPath]);
-      child_process.spawnSync('open', ['-a', sidebarPath]);
-      child_process.spawnSync('rm', [dmgPath]);
-      if (finish) {
-        finish();
-      }
-    });
-    res.pipe(file);
-  }).on('error', function(e) {
-    alert(`Got error: ${ e.message }`);
-  });
-};
-
 module.exports = {
   outgoing: KiteOutgoing,
   incoming: KiteIncoming,
 
-  createAccountForm: null,
+  accountForm: null,
   formPanel: null,
 
   activate: function(state) {
@@ -392,15 +356,15 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.createAccountForm = new CreateAccountForm(
-      state.createAccountFormState,
+    this.accountForm = new AccountForm(
+      state.accountFormState,
       this.submit.bind(this),
       this.hideForm.bind(this)
     );
 
     this.formPanel = atom.workspace.addRightPanel({
-      item: this.createAccountForm.getElement(),
-      visible: true,
+      item: this.accountForm.getElement(),
+      visible: Installer.shouldInstallKite(),
     });
   },
 
@@ -410,20 +374,18 @@ module.exports = {
 
   serialize: function() {
     return {
-      createAccountFormState: this.createAccountForm.serialize(),
+      accountFormState: this.accountForm.serialize(),
     };
   },
 
   submit: function() {
-    if (os.platform() === 'darwin' && !kiteInstalled()) {
-      getKite(
-        'https://alpha.kite.com/release/dls/mac/current',
-        this.hideForm.bind(this)
-      );
-    } else {
-      alert("Could not install Kite!");
-      this.hideForm();
-    }
+    var hide = this.hideForm.bind(this);
+    Installer.installKite(Installer.getReleaseURL(), {
+      finish: function() {
+        Installer.runKite();
+        hide();
+      },
+    });
   },
 
   hideForm: function() {
