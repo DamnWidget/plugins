@@ -1,6 +1,8 @@
 var http = require('http');
 var querystring = require('querystring');
 
+var utils = require('./utils.js');
+
 const HOSTNAME = 'test-3.kite.com';
 const PORT = 9090;
 const BASE_PATH = '/api/account';
@@ -57,7 +59,8 @@ var login = function(email, password, callback) {
 
 var saveSession = function(resp) {
   var cookies = resp.headers['set-cookie'];
-  console.log(cookies);
+  window.cookies = utils.parseCookies(cookies);
+  console.log(utils.parseCookies(cookies));
 };
 
 module.exports = {

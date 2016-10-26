@@ -10,6 +10,50 @@ function pointToOffset(text, point) {
   return total;
 }
 
+function parseCookies(cookies) {
+  if (!Array.isArray(cookies) || !cookies.length) {
+    return [];
+  }
+  var parse = (cookie) => {
+    var parsed = {
+      Path: '',
+      Domain: '',
+      Expires: new Date('0001-01-01T00:00:00Z'),
+      RawExpires: '',
+      MaxAge: 0,
+      Secure: false,
+      HttpOnly: false,
+      Raw: '',
+      Unparsed: null,
+    };
+    cookie.split('; ').forEach((raw) => {
+      if (raw === 'HttpOnly') {
+        parsed.httponly = true;
+        return;
+      }
+      if (raw === 'Secure') {
+        parsed.secure = true;
+        return;
+      }
+      var idx = raw.indexOf('=');
+      var key = raw.substring(0, idx);
+      var val = raw.substring(idx + 1);
+      if (key === 'Expires') {
+        val = new Date(val);
+      }
+      if (key in parsed) {
+        parsed[key] = val;
+      } else {
+        parsed.Name = key;
+        parsed.Value = val;
+      }
+    });
+    return parsed;
+  };
+  return cookies.map(parse);
+}
+
 module.exports = {
   pointToOffset: pointToOffset,
+  parseCookies: parseCookies,
 };
