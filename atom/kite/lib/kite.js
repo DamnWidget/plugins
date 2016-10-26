@@ -10,6 +10,7 @@ var os = require('os');
 
 var Installer = require('./installer.js');
 var AccountForms = require('./account-forms.js');
+var AccountManager = require('./account-manager.js');
 
 var DEBUG = false;
 
@@ -356,11 +357,13 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new AccountForms.CreateAccount(
+    this.accountForm = new AccountForms.Login(
       state.accountFormState,
       this.submit.bind(this),
       this.hideForm.bind(this)
     );
+
+    window.accountForm = this.accountForm;
 
     this.formPanel = atom.workspace.addRightPanel({
       item: this.accountForm.getElement(),
@@ -379,13 +382,21 @@ module.exports = {
   },
 
   submit: function() {
-    var hide = this.hideForm.bind(this);
-    Installer.installKite(Installer.getReleaseURL(), {
-      finish: function() {
-        Installer.runKite();
-        hide();
-      },
+    var email = this.accountForm.getEmail();
+    var password = this.accountForm.getPassword();
+    var req = AccountManager.login(email, password, (resp) => {
+      AccountManager.saveSession(resp);
     });
+    req.on('error', (err) => {
+      console.log(`error: ${ err.message }`);
+    });
+    // var hide = this.hideForm.bind(this);
+    // Installer.installKite(Installer.getReleaseURL(), {
+    //   finish: function() {
+    //     Installer.runKite();
+    //     hide();
+    //   },
+    // });
   },
 
   hideForm: function() {

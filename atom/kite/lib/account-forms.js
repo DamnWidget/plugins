@@ -48,17 +48,17 @@ var Login = class {
 
     let form = document.createElement('form');
 
-    let email = document.createElement('input');
-    email.type = 'email';
-    email.name = 'email';
-    email.placeholder = 'Email';
-    form.appendChild(email);
+    this.email = document.createElement('input');
+    this.email.type = 'email';
+    this.email.name = 'email';
+    this.email.placeholder = 'Email';
+    form.appendChild(this.email);
 
-    let password = document.createElement('input');
-    password.type = 'password';
-    password.name = 'password';
-    password.placeholder = 'Password';
-    form.appendChild(password);
+    this.password = document.createElement('input');
+    this.password.type = 'password';
+    this.password.name = 'password';
+    this.password.placeholder = 'Password';
+    form.appendChild(this.password);
 
     this.element.appendChild(form);
 
@@ -79,6 +79,14 @@ var Login = class {
 
   destroy() {
     this.element.remove();
+  }
+
+  getEmail() {
+    return this.email.value;
+  }
+
+  getPassword() {
+    return this.password.value;
   }
 
   getElement() {
