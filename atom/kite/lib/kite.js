@@ -9,7 +9,7 @@ var https = require('https');
 var os = require('os');
 
 var Installer = require('./installer.js');
-var AccountForm = require('./account-form.js');
+var AccountForms = require('./account-forms.js');
 
 var DEBUG = false;
 
@@ -356,7 +356,7 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new AccountForm(
+    this.accountForm = new AccountForms.CreateAccount(
       state.accountFormState,
       this.submit.bind(this),
       this.hideForm.bind(this)
@@ -364,7 +364,7 @@ module.exports = {
 
     this.formPanel = atom.workspace.addRightPanel({
       item: this.accountForm.getElement(),
-      visible: Installer.shouldInstallKite(),
+      visible: Installer.canInstallKite(),
     });
   },
 

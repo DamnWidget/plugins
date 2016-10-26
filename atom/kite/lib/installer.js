@@ -29,7 +29,7 @@ var Installer = {
     return ls.stdout.length != 0;
   },
 
-  shouldInstallKite: function() {
+  canInstallKite: function() {
     return this.isKiteSupported() && !this.isKiteInstalled();
   },
 
@@ -42,28 +42,31 @@ var Installer = {
     }
     opts = opts || {};
     var _this = this;
-    https.get(url, function(res) {
-      if (res.statusCode === 303) {
-        return _this.installKite(res.headers.location, opts);
+    https.get(url, function(resp) {
+      if (resp.statusCode === 303) {
+        return _this.installKite(resp.headers.location, opts);
       }
-      if (res.statusCode !== 200) {
+      if (resp.statusCode !== 200) {
         if (typeof(opts.badStatus) === 'function') {
-          opts.badStatus(res.statusCode);
+          opts.badStatus(resp.statusCode);
         }
         return;
       }
       var file = fs.createWriteStream(_this.KITE_DMG_PATH);
       file.on('finish', function() {
-        child_process.spawnSync('hdiutil', ['attach', _this.KITE_DMG_PATH]);
+        child_process.spawnSync(
+          'hdiutil', ['attach', _this.KITE_DMG_PATH]);
         child_process.spawnSync(
           'cp', ['-r', _this.KITE_APP_PATH.mounted, _this.APPS_PATH]);
-        child_process.spawnSync('hdiutil', ['detach', _this.KITE_VOLUME_PATH]);
-        child_process.spawnSync('rm', [_this.KITE_DMG_PATH]);
+        child_process.spawnSync(
+          'hdiutil', ['detach', _this.KITE_VOLUME_PATH]);
+        child_process.spawnSync(
+          'rm', [_this.KITE_DMG_PATH]);
         if (typeof(opts.finish) === 'function') {
           opts.finish();
         }
       });
-      res.pipe(file);
+      resp.pipe(file);
     }).on('error', function(err) {
       if (typeof(opts.error) === 'function') {
         opts.error(err);
@@ -82,7 +85,7 @@ var Installer = {
     return procs.indexOf('Kite') !== -1;
   },
 
-  shouldRunKite: function() {
+  canRunKite: function() {
     return this.isKiteInstalled() && !this.isKiteRunning();
   },
 
