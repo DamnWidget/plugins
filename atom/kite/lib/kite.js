@@ -1,3 +1,4 @@
+// Contents of this plugin will be reset by Kite on start. Changes you make
 // are not guaranteed to persist.
 
 var dgram = require('dgram');
