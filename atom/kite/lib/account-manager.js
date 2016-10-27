@@ -1,4 +1,6 @@
+var fs = require('fs');
 var http = require('http');
+var process = require('process');
 var querystring = require('querystring');
 
 var utils = require('./utils.js');
@@ -6,6 +8,8 @@ var utils = require('./utils.js');
 const HOSTNAME = 'test-3.kite.com';
 const PORT = 9090;
 const BASE_PATH = '/api/account';
+
+const SESSION_FILE_PATH = process.env.HOME + '/.kite/session.json';
 
 var createAccount = function(email, callback) {
   if (!email.length) {
@@ -58,9 +62,10 @@ var login = function(email, password, callback) {
 };
 
 var saveSession = function(resp) {
-  var cookies = resp.headers['set-cookie'];
-  window.cookies = utils.parseCookies(cookies);
-  console.log(utils.parseCookies(cookies));
+  var cookies = utils.parseSetCookies(resp.headers['set-cookie']);
+  fs.writeFileSync(SESSION_FILE_PATH, JSON.stringify(cookies, null, 2), {
+    mode: 0o755,
+  });
 };
 
 module.exports = {

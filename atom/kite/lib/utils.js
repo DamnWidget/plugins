@@ -10,7 +10,7 @@ function pointToOffset(text, point) {
   return total;
 }
 
-function parseCookies(cookies) {
+function parseSetCookies(cookies) {
   if (!Array.isArray(cookies) || !cookies.length) {
     return [];
   }
@@ -28,11 +28,11 @@ function parseCookies(cookies) {
     };
     cookie.split('; ').forEach((raw) => {
       if (raw === 'HttpOnly') {
-        parsed.httponly = true;
+        parsed.HttpOnly = true;
         return;
       }
       if (raw === 'Secure') {
-        parsed.secure = true;
+        parsed.Secure = true;
         return;
       }
       var idx = raw.indexOf('=');
@@ -55,5 +55,5 @@ function parseCookies(cookies) {
 
 module.exports = {
   pointToOffset: pointToOffset,
-  parseCookies: parseCookies,
+  parseSetCookies: parseSetCookies,
 };
