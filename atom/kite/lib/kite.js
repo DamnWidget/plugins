@@ -374,8 +374,7 @@ module.exports = {
   },
 
   submit: function() {
-    var data = this.accountForm.data;
-    var req = AccountManager.login(data.email, data.password, (resp) => {
+    var req = AccountManager.login(this.accountForm.data, (resp) => {
       AccountManager.saveSession(resp);
     });
     req.on('error', (err) => {
