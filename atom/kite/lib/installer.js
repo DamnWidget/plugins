@@ -41,10 +41,9 @@ var Installer = {
       return;
     }
     opts = opts || {};
-    var _this = this;
-    https.get(url, function(resp) {
+    return https.get(url, (resp) => {
       if (resp.statusCode === 303) {
-        return _this.installKite(resp.headers.location, opts);
+        return this.installKite(resp.headers.location, opts);
       }
       if (resp.statusCode !== 200) {
         if (typeof(opts.badStatus) === 'function') {
@@ -52,25 +51,21 @@ var Installer = {
         }
         return;
       }
-      var file = fs.createWriteStream(_this.KITE_DMG_PATH);
-      file.on('finish', function() {
+      var file = fs.createWriteStream(this.KITE_DMG_PATH);
+      file.on('finish', () => {
         child_process.spawnSync(
-          'hdiutil', ['attach', _this.KITE_DMG_PATH]);
+          'hdiutil', ['attach', this.KITE_DMG_PATH]);
         child_process.spawnSync(
-          'cp', ['-r', _this.KITE_APP_PATH.mounted, _this.APPS_PATH]);
+          'cp', ['-r', this.KITE_APP_PATH.mounted, this.APPS_PATH]);
         child_process.spawnSync(
-          'hdiutil', ['detach', _this.KITE_VOLUME_PATH]);
+          'hdiutil', ['detach', this.KITE_VOLUME_PATH]);
         child_process.spawnSync(
-          'rm', [_this.KITE_DMG_PATH]);
+          'rm', [this.KITE_DMG_PATH]);
         if (typeof(opts.finish) === 'function') {
           opts.finish();
         }
       });
       resp.pipe(file);
-    }).on('error', function(err) {
-      if (typeof(opts.error) === 'function') {
-        opts.error(err);
-      }
     });
   },
 
@@ -96,8 +91,7 @@ var Installer = {
     if (this.isKiteRunning()) {
       return;
     }
-    var _this = this;
-    child_process.spawnSync('open', ['-a', _this.KITE_APP_PATH.installed]);
+    child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
   },
 
   getReleaseURL: function() {
