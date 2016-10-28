@@ -358,7 +358,7 @@ module.exports = {
     window.accountForm = this.accountForm;
 
     this.formPanel = atom.workspace.addRightPanel({
-      item: this.accountForm.getElement(),
+      item: this.accountForm.element,
       visible: Installer.canInstallKite(),
     });
   },
@@ -374,9 +374,8 @@ module.exports = {
   },
 
   submit: function() {
-    var email = this.accountForm.getEmail();
-    var password = this.accountForm.getPassword();
-    var req = AccountManager.login(email, password, (resp) => {
+    var data = this.accountForm.data;
+    var req = AccountManager.login(data.email, data.password, (resp) => {
       AccountManager.saveSession(resp);
     });
     req.on('error', (err) => {

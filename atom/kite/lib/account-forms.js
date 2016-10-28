@@ -6,14 +6,13 @@ var CreateAccount = class {
     this.element.classList.add('create-account');
 
     let form = document.createElement('form');
+    this.element.appendChild(form);
 
     let email = document.createElement('input');
     email.type = 'email';
     email.name = 'email';
     email.placeholder = 'Email';
     form.appendChild(email);
-
-    this.element.appendChild(form);
 
     let submitBtn = document.createElement('button');
     submitBtn.textContent = "Sign up";
@@ -34,8 +33,8 @@ var CreateAccount = class {
     this.element.remove();
   }
 
-  getElement() {
-    return this.element;
+  get data() {
+    return { email: this.email.value };
   }
 };
 
@@ -47,6 +46,7 @@ var Login = class {
     this.element.classList.add('login');
 
     let form = document.createElement('form');
+    this.element.appendChild(form);
 
     this.email = document.createElement('input');
     this.email.type = 'email';
@@ -59,8 +59,6 @@ var Login = class {
     this.password.name = 'password';
     this.password.placeholder = 'Password';
     form.appendChild(this.password);
-
-    this.element.appendChild(form);
 
     let submitBtn = document.createElement('button');
     submitBtn.textContent = "Login";
@@ -81,16 +79,11 @@ var Login = class {
     this.element.remove();
   }
 
-  getEmail() {
-    return this.email.value;
-  }
-
-  getPassword() {
-    return this.password.value;
-  }
-
-  getElement() {
-    return this.element;
+  get data() {
+    return {
+      email: this.email.value,
+      password: this.password.value,
+    };
   }
 };
 

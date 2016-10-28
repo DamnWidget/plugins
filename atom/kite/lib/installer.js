@@ -103,6 +103,10 @@ var Installer = {
   getReleaseURL: function() {
     return this.RELEASE_URLS[os.platform()];
   },
+
+  installKiteRelease: function(opts) {
+    this.installKite(this.getReleaseURL(), opts);
+  },
 };
 
 module.exports = Installer;

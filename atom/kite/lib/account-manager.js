@@ -62,7 +62,7 @@ var login = function(email, password, callback) {
 };
 
 var saveSession = function(resp) {
-  var cookies = utils.parseSetCookies(resp.headers['set-cookie']);
+  var cookies = utils.parseCookies(resp.headers['set-cookie']);
   fs.writeFileSync(SESSION_FILE_PATH, JSON.stringify(cookies, null, 2), {
     mode: 0o755,
   });
