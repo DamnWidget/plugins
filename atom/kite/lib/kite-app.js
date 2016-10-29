@@ -3,6 +3,11 @@ var fs = require('fs');
 var https = require('https');
 var os = require('os');
 
+
+var Controller = {
+
+};
+
 var Installer = {
   RELEASE_URLS: {
     darwin: 'https://alpha.kite.com/release/dls/mac/current',
@@ -103,4 +108,7 @@ var Installer = {
   },
 };
 
-module.exports = Installer;
+module.exports = {
+  Controller: Controller,
+  Installer: Installer,
+};

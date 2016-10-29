@@ -11,14 +11,14 @@ const BASE_PATH = '/api/account';
 
 const SESSION_FILE_PATH = process.env.HOME + '/.kite/session.json';
 
-var createAccount = function(data, params) {
+var createAccount = function(data, opts) {
   if (!data.email) {
     throw new Error("No email provided");
   }
   var content = querystring.stringify(data);
-  var opts = {
-    hostname: params.hostname,
-    port: params.port,
+  var reqOpts = {
+    hostname: opts.hostname,
+    port: opts.port,
     path: BASE_PATH + '/createPasswordless',
     method: 'POST',
     headers: {
@@ -26,13 +26,13 @@ var createAccount = function(data, params) {
       'Content-Length': Buffer.byteLength(content),
     },
   };
-  var req = http.request(opts, params.callback);
+  var req = http.request(reqOpts, opts.callback);
   req.write(content);
   req.end();
   return req;
 };
 
-var login = function(data, params) {
+var login = function(data, opts) {
   if (!data.email) {
     throw new Error("No email provided");
   }
@@ -40,9 +40,9 @@ var login = function(data, params) {
     throw new Error("No password provided");
   }
   var content = querystring.stringify(data);
-  var opts = {
-    hostname: params.hostname,
-    port: params.port,
+  var reqOpts = {
+    hostname: opts.hostname,
+    port: opts.port,
     path: BASE_PATH + '/login',
     method: 'POST',
     headers: {
@@ -50,7 +50,7 @@ var login = function(data, params) {
       'Content-Length': Buffer.byteLength(content),
     },
   };
-  var req = http.request(opts, params.callback);
+  var req = http.request(reqOpts, opts.callback);
   req.write(content);
   req.end();
   return req;
