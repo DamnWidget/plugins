@@ -12,7 +12,7 @@ var os = require('os');
 var utils = require('./utils.js');
 var completions = require('./completions.js');
 
-var Installer = require('./installer.js');
+var StateController = require('./state-controller.js');
 var AccountForms = require('./account-forms.js');
 var AccountManager = require('./account-manager.js');
 
@@ -359,7 +359,7 @@ module.exports = {
 
     this.formPanel = atom.workspace.addRightPanel({
       item: this.accountForm.element,
-      visible: Installer.canInstallKite(),
+      visible: StateController.canInstallKite(),
     });
   },
 

@@ -53,6 +53,10 @@ function parseCookies(cookies) {
   return cookies.map(parse);
 }
 
+function dumpCookies(cookies) {
+  return cookies.map((c) => c.Name + '=' + c.Value).join('; ');
+}
+
 module.exports = {
   pointToOffset: pointToOffset,
   parseCookies: parseCookies,
