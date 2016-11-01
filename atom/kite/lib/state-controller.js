@@ -3,7 +3,19 @@ var fs = require('fs');
 var https = require('https');
 var os = require('os');
 
+var Client = require('./client.js');
+
+var client = new Client('127.0.0.1', 46624, '/api/account', false);
+
 var StateController = {
+  STATES: {
+    UNINSTALLED: 0,
+    INSTALLED: 1,
+    RUNNING: 2,
+    AUTHENTICATED: 3,
+    WHITELISTED: 4,
+  },
+
   RELEASE_URLS: {
     darwin: 'https://alpha.kite.com/release/dls/mac/current',
   },
@@ -92,6 +104,60 @@ var StateController = {
       return;
     }
     child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
+  },
+
+  isUserAuthenticated: function() {
+    if (!this.isKiteRunning()) {
+      return false;
+    }
+    var auth = false;
+    var prom = new Promise(function(resolve, reject) {
+      var req = client.request({ path: '/authenticated' }, (resp) => {
+        if (resp.statusCode !== 200) {
+          reject();
+          return;
+        }
+        var raw = '';
+        resp.on('data', (chunk) => raw += chunk);
+        resp.on('end', () => {
+          if (raw === 'authenticated') {
+            resolve();
+          } else {
+            reject();
+          }
+        })
+      });
+      req.on('error', (err) => {
+        reject();
+      });
+    });
+    prom.then(() => {
+      auth = true;
+      console.log("authenticated");
+    }).catch(() => {
+      auth = false;
+      console.log("not authenticated");
+    });
+  },
+
+  isProjectWhitelisted: function() {
+    return false;
+  },
+
+  get state() {
+    if (!this.isKiteInstalled()) {
+      return this.STATES.UNINSTALLED;
+    }
+    if (!this.isKiteRunning()) {
+      return this.STATES.INSTALLED;
+    }
+    if (!this.isUserAuthenticated()) {
+      return this.STATES.RUNNING;
+    }
+    if (!this.isProjectWhitelisted()) {
+      return this.STATES.AUTHENTICATED;
+    }
+    return this.STATES.WHITELISTED;
   },
 
   getReleaseURL: function() {

@@ -16,6 +16,8 @@ var StateController = require('./state-controller.js');
 var AccountForms = require('./account-forms.js');
 var AccountManager = require('./account-manager.js');
 
+window.sc = StateController;
+
 var DEBUG = false;
 
 // PLUGIN_ID identifies this plugin so that Kite can send messages back to
