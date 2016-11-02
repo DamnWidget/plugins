@@ -38,7 +38,7 @@ var Client = class {
   }
 
   readCookies(resp) {
-    var cookies = utils.parseCookies(resp['set-cookie']);
+    var cookies = utils.parseSetCookies(resp['set-cookie']);
     for (var i = 0; i < cookies.length; i++) {
       var c = cookies[i];
       this.cookies[c.Name] = c;

@@ -10,7 +10,7 @@ function pointToOffset(text, point) {
   return total;
 }
 
-function parseCookies(cookies) {
+function parseSetCookies(cookies) {
   if (!Array.isArray(cookies) || !cookies.length) {
     return [];
   }
@@ -59,5 +59,6 @@ function dumpCookies(cookies) {
 
 module.exports = {
   pointToOffset: pointToOffset,
-  parseCookies: parseCookies,
+  parseSetCookies: parseSetCookies,
+  dumpCookies: dumpCookies,
 };

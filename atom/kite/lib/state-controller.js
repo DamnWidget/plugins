@@ -5,15 +5,16 @@ var os = require('os');
 
 var Client = require('./client.js');
 
-var client = new Client('127.0.0.1', 46624, '/api/account', false);
+var client = new Client('127.0.0.1', 46624, '', false);
 
 var StateController = {
   STATES: {
-    UNINSTALLED: 0,
-    INSTALLED: 1,
-    RUNNING: 2,
-    AUTHENTICATED: 3,
-    WHITELISTED: 4,
+    UNSUPPORTED: 0,
+    UNINSTALLED: 1,
+    INSTALLED: 2,
+    RUNNING: 3,
+    AUTHENTICATED: 4,
+    WHITELISTED: 5,
   },
 
   RELEASE_URLS: {
@@ -29,33 +30,45 @@ var StateController = {
   KITE_SIDEBAR_PATH: '/Applications/Kite.app/Contents/MacOS/KiteSidebar.app',
 
   isKiteSupported: function() {
-    return os.platform() === 'darwin';
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        os.platform() === 'darwin' ?
+          resolve() : reject(this.STATES.UNSUPPORTED);
+      }, 0);
+    });
   },
 
   isKiteInstalled: function() {
-    if (!this.isKiteSupported()) {
-      return false;
-    }
-    var _this = this;
-    var ls = child_process.spawnSync('ls', [_this.KITE_APP_PATH.installed]);
-    return ls.stdout.length != 0;
+    return new Promise((resolve, reject) => {
+      if (!this.isKiteSupported()) {
+        reject(this.states.UNSUPPORTED);
+        return;
+      }
+      var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
+      ls.stdout.length != 0 ? resolve() : reject(this.states.UNINSTALLED);
+    });
   },
 
   canInstallKite: function() {
-    return this.isKiteSupported() && !this.isKiteInstalled();
+    return new Promise((resolve, reject) => {
+      this.isKiteSupported().catch((state) => {
+        reject(state);
+      }).then(() => {
+        this.isKiteInstalled().then(() => {
+          reject(this.states.INSTALLED);
+        }).catch((state) => {
+          resolve();
+        });
+      });
+    });
   },
 
-  installKite: function(url, opts) {
-    if (!this.isKiteSupported()) {
-      throw new Error("Kite not supported on this machine");
-    }
-    if (this.isKiteInstalled()) {
-      return;
-    }
-    opts = opts || {};
-    return https.get(url, (resp) => {
+  installKite: function(url, opts={}) {
+    var handle = (resp) => {
       if (resp.statusCode === 303) {
-        return this.installKite(resp.headers.location, opts);
+        this.installKite(resp.headers.location, opts)
+          .then(resolve).catch(reject);
+        return;
       }
       if (resp.statusCode !== 200) {
         if (typeof(opts.badStatus) === 'function') {
@@ -78,94 +91,171 @@ var StateController = {
         }
       });
       resp.pipe(file);
+    };
+
+    return new Promise((resolve, reject) => {
+      this.canInstallKite().catch((state) => {
+        reject(state);
+      }).then(() => {
+        resolve(https.get(url, handle));
+      });
     });
   },
 
   isKiteRunning: function() {
-    if (!this.isKiteSupported()) {
-      return false;
-    }
-    var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
-      encoding: 'utf8',
+    return new Promise((resolve, reject) => {
+      var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
+        encoding: 'utf8',
+      });
+      var procs = ps.stdout.split('\n');
+      procs.indexOf('Kite') !== -1 ?
+        resolve() : reject(this.state.INSTALLED);
+
+      // this.isKiteInstalled().catch((state) => {
+      //   reject(state);
+      // }).then(() => {
+      //   var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
+      //     encoding: 'utf8',
+      //   });
+      //   var procs = ps.stdout.split('\n');
+      //   procs.indexOf('Kite') !== -1 ?
+      //     resolve() : reject(this.state.INSTALLED);
+      // });
     });
-    var procs = ps.stdout.split('\n');
-    return procs.indexOf('Kite') !== -1;
   },
 
   canRunKite: function() {
-    return this.isKiteInstalled() && !this.isKiteRunning();
+    return new Promise((resolve, reject) => {
+      this.isKiteInstalled().catch((state) => {
+        reject(state);
+      }).then(() => {
+        this.isKiteRunning().then(() => {
+          reject(this.STATES.RUNNING);
+        }).catch((state) => {
+          resolve();
+        })
+      });
+    });
   },
 
   runKite: function() {
-    if (!this.isKiteInstalled()) {
-      throw new Error("Kite not installed on this matchine");
-    }
-    if (this.isKiteRunning()) {
-      return;
-    }
-    child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
+    return new Promise((resolve, reject) => {
+      this.canRunKite().catch((state) => {
+        reject(state);
+      }).then(() => {
+        child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
+        resolve();
+      });
+    });
   },
 
-  isUserAuthenticated: function() {
-    if (!this.isKiteRunning()) {
-      return false;
-    }
-    var auth = false;
-    var prom = new Promise(function(resolve, reject) {
-      var req = client.request({ path: '/authenticated' }, (resp) => {
-        if (resp.statusCode !== 200) {
-          reject();
-          return;
+  isUserAuthenticated: function(opts={}) {
+    var handle = (resp) => {
+      if (resp.statusCode !== 200) {
+        if (typeof(opts.badStatus) === 'function') {
+          opts.badStatus(resp.statusCode);
         }
-        var raw = '';
-        resp.on('data', (chunk) => raw += chunk);
-        resp.on('end', () => {
-          if (raw === 'authenticated') {
-            resolve();
-          } else {
-            reject();
+        return;
+      }
+      var raw = '';
+      resp.on('data', (chunk) => raw += chunk);
+      resp.on('end', () => {
+        if (raw === 'authenticated') {
+          if (typeof(opts.authenticated) === 'function') {
+            opts.authenticated();
           }
-        })
+        } else {
+          if (typeof(opts.unauthenticated) === 'function') {
+            opts.unauthenticated();
+          }
+        }
       });
-      req.on('error', (err) => {
-        reject();
+    };
+
+    return new Promise((resolve, reject) => {
+      this.isKiteRunning().catch((state) => {
+        reject(state);
+      }).then(() => {
+        resolve(client.request({
+          path: '/api/account/authenticated',
+          method: 'GET',
+        }, handle));
+      })
+    });
+  },
+
+  canAuthenticateUser: function() {
+    return new Promise((resolve, reject) => {
+      this.isKiteRunning().catch((state) => {
+        reject(state);
+      }).then(() => {
+        this.isUserAuthenticated().then(() => {
+          reject(this.STATES.AUTHENTICATED);
+        }).catch(() => {
+          resolve();
+        });
       });
     });
-    prom.then(() => {
-      auth = true;
-      console.log("authenticated");
-    }).catch(() => {
-      auth = false;
-      console.log("not authenticated");
+  },
+
+  isPathWhitelisted: function(path, opts={}) {
+    var handle = (resp) => {
+      if (resp.statusCode !== 200) {
+        if (typeof(opts.badStatus) === 'function') {
+          opts.badStatus(resp.statusCode);
+        }
+        return;
+      }
+      var raw = '';
+      resp.on('data', (chunk) => raw += chunk);
+      resp.on('end', () => {
+        var whitelisted = false;
+        try {
+          var settings = JSON.parse(raw);
+          whitelisted = settings.inclusions.indexOf(path) !== -1;
+        } catch(e) {
+          whitelisted = false;
+        }
+        if (whitelisted) {
+          if (typeof(opts.whitelisted) === 'function') {
+            opts.whitelisted();
+          }
+        } else {
+          if (typeof(opts.unwhitelisted) === 'function') {
+            opts.unwhitelisted();
+          }
+        }
+      });
+    };
+
+    return new Promise((resolve, reject) => {
+      this.isKiteRunning().catch((state) => {
+        reject(state);
+      }).then(() => {
+        resolve(client.request({
+          path: '/clientapi/settings',
+          method: 'GET',
+        }, handle));
+      });
     });
   },
 
-  isProjectWhitelisted: function() {
-    return false;
+  handleState: function(path) {
+    return new Promise((resolve, reject) => {
+      this.isPathWhitelisted(path).catch((state) => {
+        resolve(state);
+      }).then(() => {
+        resolve(this.STATES.WHITELISTED);
+      });
+    });
   },
 
-  get state() {
-    if (!this.isKiteInstalled()) {
-      return this.STATES.UNINSTALLED;
-    }
-    if (!this.isKiteRunning()) {
-      return this.STATES.INSTALLED;
-    }
-    if (!this.isUserAuthenticated()) {
-      return this.STATES.RUNNING;
-    }
-    if (!this.isProjectWhitelisted()) {
-      return this.STATES.AUTHENTICATED;
-    }
-    return this.STATES.WHITELISTED;
-  },
-
-  getReleaseURL: function() {
+  get releaseURL() {
     return this.RELEASE_URLS[os.platform()];
   },
 
   installKiteRelease: function(opts) {
-    this.installKite(this.getReleaseURL(), opts);
+    return this.installKite(this.releaseURL, opts);
   },
 };
 

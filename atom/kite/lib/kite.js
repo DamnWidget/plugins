@@ -361,7 +361,7 @@ module.exports = {
 
     this.formPanel = atom.workspace.addRightPanel({
       item: this.accountForm.element,
-      visible: StateController.canInstallKite(),
+      visible: false,
     });
   },
 
