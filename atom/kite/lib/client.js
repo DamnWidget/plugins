@@ -16,9 +16,7 @@ var Client = class {
     opts.hostname = this.hostname;
     opts.port = this.port;
     opts.path = this.base + opts.path;
-    if (!('headers' in opts)) {
-      opts.headers = {};
-    }
+    opts.headers = opts.headers || {};
     this.writeCookies(opts.headers);
     var req = this.proto.request(opts, (resp) => {
       this.readCookies(resp);

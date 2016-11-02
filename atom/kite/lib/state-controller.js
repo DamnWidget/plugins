@@ -2,12 +2,13 @@ var child_process = require('child_process');
 var fs = require('fs');
 var https = require('https');
 var os = require('os');
+var querystring = require('querystring');
 
 var Client = require('./client.js');
 
-var client = new Client('127.0.0.1', 46624, '', false);
-
 var StateController = {
+  client: new Client('127.0.0.1', 46624, '', false),
+
   STATES: {
     UNSUPPORTED: 0,
     UNINSTALLED: 1,
@@ -40,12 +41,12 @@ var StateController = {
 
   isKiteInstalled: function() {
     return new Promise((resolve, reject) => {
-      if (!this.isKiteSupported()) {
-        reject(this.states.UNSUPPORTED);
-        return;
-      }
-      var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
-      ls.stdout.length != 0 ? resolve() : reject(this.states.UNINSTALLED);
+      this.isKiteSupported().catch((state) => {
+        reject(state);
+      }).then(() => {
+        var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
+        ls.stdout.length != 0 ? resolve() : reject(this.STATES.UNINSTALLED);
+      });
     });
   },
 
@@ -64,7 +65,7 @@ var StateController = {
   },
 
   installKite: function(url, opts={}) {
-    var handle = (resp) => {
+    var handle = (resp, resolve, reject) => {
       if (resp.statusCode === 303) {
         this.installKite(resp.headers.location, opts)
           .then(resolve).catch(reject);
@@ -97,30 +98,25 @@ var StateController = {
       this.canInstallKite().catch((state) => {
         reject(state);
       }).then(() => {
-        resolve(https.get(url, handle));
+        resolve(https.get(url, (resp) => {
+          handle(resp, resolve, reject);
+        }));
       });
     });
   },
 
   isKiteRunning: function() {
     return new Promise((resolve, reject) => {
-      var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
-        encoding: 'utf8',
+      this.isKiteInstalled().catch((state) => {
+        reject(state);
+      }).then(() => {
+        var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
+          encoding: 'utf8',
+        });
+        var procs = ps.stdout.split('\n');
+        procs.indexOf('Kite') !== -1 ?
+          resolve() : reject(this.state.INSTALLED);
       });
-      var procs = ps.stdout.split('\n');
-      procs.indexOf('Kite') !== -1 ?
-        resolve() : reject(this.state.INSTALLED);
-
-      // this.isKiteInstalled().catch((state) => {
-      //   reject(state);
-      // }).then(() => {
-      //   var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
-      //     encoding: 'utf8',
-      //   });
-      //   var procs = ps.stdout.split('\n');
-      //   procs.indexOf('Kite') !== -1 ?
-      //     resolve() : reject(this.state.INSTALLED);
-      // });
     });
   },
 
@@ -176,7 +172,7 @@ var StateController = {
       this.isKiteRunning().catch((state) => {
         reject(state);
       }).then(() => {
-        resolve(client.request({
+        resolve(this.client.request({
           path: '/api/account/authenticated',
           method: 'GET',
         }, handle));
@@ -194,6 +190,46 @@ var StateController = {
         }).catch(() => {
           resolve();
         });
+      });
+    });
+  },
+
+  authenticateUser: function(email, password, opts={}) {
+    var handle = (resp) => {
+      switch (resp.statusCode) {
+      case 200:
+        if (typeof(opts.authenticated) === 'function') {
+          opts.authenticated();
+        }
+        break;
+      case 400:
+        if (typeof(opts.unauthorized) === 'function') {
+          opts.unauthorized();
+        }
+        break;
+      default:
+        if (typeof(opts.badStatus) === 'function') {
+          opts.badStatus(resp.statusCode);
+        }
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      this.canAuthenticateUser().catch((state) => {
+        reject(state);
+      }).then(() => {
+        var content = querystring.stringify({
+          email: email,
+          password: password,
+        });
+        resolve(this.client.request({
+          path: '/api/account/login',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(content),
+          },
+        }, handle, content));
       });
     });
   },
@@ -232,7 +268,7 @@ var StateController = {
       this.isKiteRunning().catch((state) => {
         reject(state);
       }).then(() => {
-        resolve(client.request({
+        resolve(this.client.request({
           path: '/clientapi/settings',
           method: 'GET',
         }, handle));

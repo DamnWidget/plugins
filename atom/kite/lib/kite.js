@@ -359,9 +359,11 @@ module.exports = {
 
     window.accountForm = this.accountForm;
 
-    this.formPanel = atom.workspace.addRightPanel({
-      item: this.accountForm.element,
-      visible: false,
+    StateController.isKiteInstalled().catch(() => {
+      this.formPanel = atom.workspace.addRightPanel({
+        item: this.accountForm.element,
+        visible: true,
+      });
     });
   },
 
