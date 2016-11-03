@@ -34,7 +34,8 @@ var StateController = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         os.platform() === 'darwin' ?
-          resolve() : reject(this.STATES.UNSUPPORTED);
+          resolve() :
+          reject({ type: 'bad_state': data: this.STATES.UNSUPPORTED });
       }, 0);
     });
   },
@@ -42,10 +43,12 @@ var StateController = {
   isKiteInstalled: function() {
     return new Promise((resolve, reject) => {
       this.isKiteSupported().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
-        ls.stdout.length != 0 ? resolve() : reject(this.STATES.UNINSTALLED);
+        ls.stdout.length != 0 ?
+          resolve() :
+          reject({ type: 'bad_state', data: this.STATES.UNINSTALLED });
       });
     });
   },
@@ -53,10 +56,10 @@ var StateController = {
   canInstallKite: function() {
     return new Promise((resolve, reject) => {
       this.isKiteSupported().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         this.isKiteInstalled().then(() => {
-          reject(this.states.INSTALLED);
+          reject({ type: 'bad_state', data: this.states.INSTALLED });
         }).catch((state) => {
           resolve();
         });
@@ -64,17 +67,15 @@ var StateController = {
     });
   },
 
-  installKite: function(url, opts={}) {
+  installKite: function(url) {
     var handle = (resp, resolve, reject) => {
       if (resp.statusCode === 303) {
-        this.installKite(resp.headers.location, opts)
+        this.installKite(resp.headers.location)
           .then(resolve).catch(reject);
         return;
       }
       if (resp.statusCode !== 200) {
-        if (typeof(opts.badStatus) === 'function') {
-          opts.badStatus(resp.statusCode);
-        }
+        reject({ type: 'bad_status', data: resp.statusCode });
         return;
       }
       var file = fs.createWriteStream(this.KITE_DMG_PATH);
@@ -87,20 +88,20 @@ var StateController = {
           'hdiutil', ['detach', this.KITE_VOLUME_PATH]);
         child_process.spawnSync(
           'rm', [this.KITE_DMG_PATH]);
-        if (typeof(opts.finish) === 'function') {
-          opts.finish();
-        }
+        resolve();
       });
       resp.pipe(file);
     };
 
     return new Promise((resolve, reject) => {
       this.canInstallKite().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
-        resolve(https.get(url, (resp) => {
+        https.get(url, (resp) => {
           handle(resp, resolve, reject);
-        }));
+        }).on('error', (e) => {
+          reject({ type: 'http_error', data: e });
+        });
       });
     });
   },
@@ -108,14 +109,15 @@ var StateController = {
   isKiteRunning: function() {
     return new Promise((resolve, reject) => {
       this.isKiteInstalled().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
           encoding: 'utf8',
         });
         var procs = ps.stdout.split('\n');
         procs.indexOf('Kite') !== -1 ?
-          resolve() : reject(this.state.INSTALLED);
+          resolve() :
+          reject({ type: 'bad_state', data: this.state.INSTALLED });
       });
     });
   },
@@ -123,10 +125,10 @@ var StateController = {
   canRunKite: function() {
     return new Promise((resolve, reject) => {
       this.isKiteInstalled().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         this.isKiteRunning().then(() => {
-          reject(this.STATES.RUNNING);
+          reject({ type: 'bad_state', data: this.STATES.RUNNING });
         }).catch((state) => {
           resolve();
         })
@@ -137,7 +139,7 @@ var StateController = {
   runKite: function() {
     return new Promise((resolve, reject) => {
       this.canRunKite().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
         resolve();
@@ -145,37 +147,31 @@ var StateController = {
     });
   },
 
-  isUserAuthenticated: function(opts={}) {
-    var handle = (resp) => {
+  isUserAuthenticated: function() {
+    var handle = (resp, resolve, reject) => {
       if (resp.statusCode !== 200) {
-        if (typeof(opts.badStatus) === 'function') {
-          opts.badStatus(resp.statusCode);
-        }
+        reject({ type: 'bad_status', data: resp.statusCode });
         return;
       }
       var raw = '';
       resp.on('data', (chunk) => raw += chunk);
       resp.on('end', () => {
         if (raw === 'authenticated') {
-          if (typeof(opts.authenticated) === 'function') {
-            opts.authenticated();
-          }
+          resolve();
         } else {
-          if (typeof(opts.unauthenticated) === 'function') {
-            opts.unauthenticated();
-          }
+          reject({ type: 'unauthenticated' });
         }
       });
     };
 
     return new Promise((resolve, reject) => {
       this.isKiteRunning().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
-        resolve(this.client.request({
+        this.client.request({
           path: '/api/account/authenticated',
           method: 'GET',
-        }, handle));
+        }, (resp) => handle(resp, resolve, reject));
       })
     });
   },
@@ -183,10 +179,10 @@ var StateController = {
   canAuthenticateUser: function() {
     return new Promise((resolve, reject) => {
       this.isKiteRunning().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         this.isUserAuthenticated().then(() => {
-          reject(this.STATES.AUTHENTICATED);
+          reject({ type: 'bad_state', data: this.STATES.AUTHENTICATED });
         }).catch(() => {
           resolve();
         });
@@ -194,53 +190,44 @@ var StateController = {
     });
   },
 
-  authenticateUser: function(email, password, opts={}) {
-    var handle = (resp) => {
+  authenticateUser: function(email, password) {
+    var handle = (resp, reject) => {
       switch (resp.statusCode) {
       case 200:
-        if (typeof(opts.authenticated) === 'function') {
-          opts.authenticated();
-        }
+        resolve();
         break;
       case 400:
-        if (typeof(opts.unauthorized) === 'function') {
-          opts.unauthorized();
-        }
+        reject({ type: 'unauthorized' });
         break;
       default:
-        if (typeof(opts.badStatus) === 'function') {
-          opts.badStatus(resp.statusCode);
-        }
+        reject({ type: 'bad_status', data: resp.statusCode });
       }
     };
 
     return new Promise((resolve, reject) => {
       this.canAuthenticateUser().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
         var content = querystring.stringify({
           email: email,
           password: password,
         });
-        resolve(this.client.request({
+        this.client.request({
           path: '/api/account/login',
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Content-Length': Buffer.byteLength(content),
           },
-        }, handle, content));
+        }, (resp) => handle(resp, resolve, reject), content);
       });
     });
   },
 
-  isPathWhitelisted: function(path, opts={}) {
-    var handle = (resp) => {
+  isPathWhitelisted: function(path) {
+    var handle = (resp, resolve, reject) => {
       if (resp.statusCode !== 200) {
-        if (typeof(opts.badStatus) === 'function') {
-          opts.badStatus(resp.statusCode);
-        }
-        return;
+        reject({ type: 'bad_status', data: resp.statusCode });
       }
       var raw = '';
       resp.on('data', (chunk) => raw += chunk);
@@ -253,27 +240,43 @@ var StateController = {
           whitelisted = false;
         }
         if (whitelisted) {
-          if (typeof(opts.whitelisted) === 'function') {
-            opts.whitelisted();
-          }
+          resolve();
         } else {
-          if (typeof(opts.unwhitelisted) === 'function') {
-            opts.unwhitelisted();
-          }
+          reject({ type: 'unwhitelisted' });
         }
       });
     };
 
     return new Promise((resolve, reject) => {
       this.isKiteRunning().catch((state) => {
-        reject(state);
+        reject({ type: 'bad_state', data: state });
       }).then(() => {
-        resolve(this.client.request({
+        this.client.request({
           path: '/clientapi/settings',
           method: 'GET',
-        }, handle));
+        }, (resp) => handle(resp, resolve, reject));
       });
     });
+  },
+
+  canWhitelistPath: function(path) {
+    return new Promise((resolve, reject) => {
+      this.isUserAuthenticated().catch((state) => {
+        reject({ type: 'bad_state', data: state });
+      }).then(() => {
+        this.isPathWhitelisted(path).then(() => {
+          reject({ type: 'bad_state', data: this.STATES.WHITELISTED });
+        }).catch((state) => {
+          resolve();
+        });
+      });
+    });
+  },
+
+  whitelistPath: function(path) {
+    var handle = (resp, resolve, reject) => {
+
+    };
   },
 
   handleState: function(path) {
@@ -290,8 +293,8 @@ var StateController = {
     return this.RELEASE_URLS[os.platform()];
   },
 
-  installKiteRelease: function(opts) {
-    return this.installKite(this.releaseURL, opts);
+  installKiteRelease: function() {
+    return this.installKite(this.releaseURL);
   },
 };
 
