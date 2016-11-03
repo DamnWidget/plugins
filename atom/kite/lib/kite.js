@@ -12,7 +12,7 @@ var os = require('os');
 var utils = require('./utils.js');
 var completions = require('./completions.js');
 
-var AccountForms = require('./account-forms.js');
+var CreateAccountForm = require('./create-account-form.js');
 var AccountManager = require('./account-manager.js');
 var StateController = require('./state-controller.js');
 
@@ -349,7 +349,7 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new AccountForms.CreateAccount(
+    this.accountForm = new CreateAccountForm(
       state.accountFormState,
       this.submit.bind(this),
       this.hideForm.bind(this)
