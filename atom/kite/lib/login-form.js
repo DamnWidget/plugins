@@ -31,9 +31,7 @@ var LoginForm = class {
     this.element.appendChild(closeBtn);
   }
 
-  serialize() {
-    return this.data;
-  }
+  serialize() { }
 
   destroy() {
     this.element.remove();
