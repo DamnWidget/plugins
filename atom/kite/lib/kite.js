@@ -12,11 +12,9 @@ var os = require('os');
 var utils = require('./utils.js');
 var completions = require('./completions.js');
 
-var StateController = require('./state-controller.js');
 var AccountForms = require('./account-forms.js');
 var AccountManager = require('./account-manager.js');
-
-window.sc = StateController;
+var StateController = require('./state-controller.js');
 
 var DEBUG = false;
 
@@ -351,15 +349,13 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new AccountForms.Login(
+    this.accountForm = new AccountForms.CreateAccount(
       state.accountFormState,
       this.submit.bind(this),
       this.hideForm.bind(this)
     );
 
-    window.accountForm = this.accountForm;
-
-    StateController.isKiteInstalled().catch(() => {
+    StateController.canInstallKite().then(() => {
       this.formPanel = atom.workspace.addRightPanel({
         item: this.accountForm.element,
         visible: true,
@@ -378,11 +374,20 @@ module.exports = {
   },
 
   submit: function() {
-    var req = AccountManager.login(this.accountForm.data, (resp) => {
-      AccountManager.saveSession(resp);
-    });
-    req.on('error', (err) => {
-      console.log(`error: ${ err.message }`);
+    var opts = {
+      badStatus: (code) => {
+        console.log(`bad status: ${ code }`);
+      },
+      finish: () => {
+        console.log("installed successfully!");
+      },
+    };
+    StateController.installKiteRelease(opts).then((resp) => {
+      resp.on('error', (err) => {
+        console.log(`http error: ${ err.message }`);
+      });
+    }).catch((status) => {
+      console.log(`could not install: ${ status }`);
     });
   },
 
@@ -400,6 +405,24 @@ module.exports = {
       default: false,
       title: "Enable Completions",
       description: "Show auto-completions from Kite as Atom suggestions",
+    },
+    hostname: {
+      type: 'string',
+      default: 'test-3.kite.com',
+      title: "Kite Host",
+      description: "Hostname of Kite server",
+    },
+    port: {
+      type: 'integer',
+      default: 9090,
+      title: "Kite Host Port",
+      description: "Port of Kite server",
+    },
+    ssl: {
+      type: 'boolean',
+      default: false,
+      title: "Use HTTPS",
+      description: "Use HTTPS when connecting to Kite server",
     },
   },
 };
