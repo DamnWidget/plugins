@@ -1,5 +1,5 @@
 var LoginForm = class {
-  constructor(state, submit, close) {
+  constructor(state, listeners) {
     this.element = document.createElement('div');
     this.element.classList.add('account-form')
     this.element.classList.add('native-key-bindings');
@@ -22,12 +22,12 @@ var LoginForm = class {
 
     let submitBtn = document.createElement('button');
     submitBtn.textContent = "Login";
-    submitBtn.onclick = submit;
+    submitBtn.onclick = listeners.submit;
     this.element.appendChild(submitBtn);
 
     let closeBtn = document.createElement('button');
     closeBtn.textContent = "Close";
-    closeBtn.onclick = close;
+    closeBtn.onclick = listeners.close;
     this.element.appendChild(closeBtn);
   }
 
@@ -35,6 +35,10 @@ var LoginForm = class {
 
   destroy() {
     this.element.remove();
+  }
+
+  setEmail(email) {
+    this.email.value = email;
   }
 
   get data() {

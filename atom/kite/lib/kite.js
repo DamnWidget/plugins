@@ -332,6 +332,17 @@ var KiteIncoming = {
   },
 };
 
+var TestModel = class {
+  constructor() { }
+  getTitle() {
+    return "Test";
+  }
+};
+
+var findModel = (m) => {
+  return document.createElement('div');
+};
+
 module.exports = {
   outgoing: KiteOutgoing,
   incoming: KiteIncoming,
@@ -349,11 +360,13 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new CreateAccountForm(
-      state.accountFormState,
-      this.submit.bind(this),
-      this.hideForm.bind(this)
-    );
+    this.accountForm = new CreateAccountForm(state.accountFormState, {
+      submit: this.submit.bind(this),
+      close: this.hideForm.bind(this),
+    });
+
+    var pane = atom.workspace.getActivePane();
+    atom.views.addViewProvider(TestModel, findModel);
 
     StateController.canInstallKite().then(() => {
       this.formPanel = atom.workspace.addRightPanel({
@@ -364,7 +377,9 @@ module.exports = {
   },
 
   deactivate: function() {
-    this.formPanel.destroy();
+    if (this.formPanel) {
+      this.formPanel.destroy();
+    }
   },
 
   serialize: function() {
@@ -374,20 +389,10 @@ module.exports = {
   },
 
   submit: function() {
-    var opts = {
-      badStatus: (code) => {
-        console.log(`bad status: ${ code }`);
-      },
-      finish: () => {
-        console.log("installed successfully!");
-      },
-    };
-    StateController.installKiteRelease(opts).then((resp) => {
-      resp.on('error', (err) => {
-        console.log(`http error: ${ err.message }`);
-      });
-    }).catch((status) => {
-      console.log(`could not install: ${ status }`);
+    StateController.installKiteRelease().then(() => {
+      console.log("finished installing Kite!");
+    }).catch((err) => {
+      console.log(`install error: ${ err.type }`);
     });
   },
 

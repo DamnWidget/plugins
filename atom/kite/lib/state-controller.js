@@ -35,7 +35,7 @@ var StateController = {
       setTimeout(() => {
         os.platform() === 'darwin' ?
           resolve() :
-          reject({ type: 'bad_state': data: this.STATES.UNSUPPORTED });
+          reject({ type: 'bad_state', data: this.STATES.UNSUPPORTED });
       }, 0);
     });
   },
@@ -46,7 +46,7 @@ var StateController = {
         reject({ type: 'bad_state', data: state });
       }).then(() => {
         var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
-        ls.stdout.length != 0 ?
+        ls.stdout.length !== 0 ?
           resolve() :
           reject({ type: 'bad_state', data: this.STATES.UNINSTALLED });
       });
@@ -234,8 +234,8 @@ var StateController = {
       resp.on('end', () => {
         var whitelisted = false;
         try {
-          var settings = JSON.parse(raw);
-          whitelisted = settings.inclusions.indexOf(path) !== -1;
+          var dirs = JSON.parse(raw);
+          whitelisted = dirs.indexOf(path) !== -1;
         } catch(e) {
           whitelisted = false;
         }
@@ -252,7 +252,7 @@ var StateController = {
         reject({ type: 'bad_state', data: state });
       }).then(() => {
         this.client.request({
-          path: '/clientapi/settings',
+          path: '/clientapi/settings/inclusions',
           method: 'GET',
         }, (resp) => handle(resp, resolve, reject));
       });
@@ -275,8 +275,30 @@ var StateController = {
 
   whitelistPath: function(path) {
     var handle = (resp, resolve, reject) => {
-
+      if (resp.statusCode !== 200) {
+        reject({ type: 'bad_status', data: resp.statusCode });
+      } else {
+        resolve();
+      }
     };
+
+    return new Promise((resolve, reject) => {
+      this.canWhitelistPath(path).catch((state) => {
+        reject({ type: 'bad_state', data: state });
+      }).then(() => {
+        var content = querystring.stringify({
+          inclusions: path,
+        });
+        this.client.request({
+          path: '/clientapi/settings/inclusions',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(content),
+          },
+        }, (resp) => handle(resp, resolve, reject), content);
+      });
+    });
   },
 
   handleState: function(path) {
