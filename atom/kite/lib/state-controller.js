@@ -78,17 +78,41 @@ var StateController = {
         reject({ type: 'bad_status', data: resp.statusCode });
         return;
       }
+
+      var rm = () => {
+        var proc = child_process.spawn('rm', [this.KITE_DMG_PATH]);
+        proc.on('close', (code) => {
+          resolve();
+        });
+      };
+
+      var unmount = () => {
+        var proc = child_process.spawn(
+          'hdiutil', ['detach', this.KITE_VOLUME_PATH]);
+        proc.on('close', (code) => {
+          rm();
+        });
+      };
+
+      var cp = () => {
+        var proc = child_process.spawn(
+          'cp', ['-r', this.KITE_APP_PATH.mounted, this.APPS_PATH]);
+        proc.on('close', (code) => {
+          unmount();
+        });
+      };
+
+      var mount = () => {
+        var proc = child_process.spawn(
+          'hdiutil', ['attach', this.KITE_DMG_PATH]);
+        proc.on('close', (code) => {
+          cp();
+        });
+      };
+
       var file = fs.createWriteStream(this.KITE_DMG_PATH);
       file.on('finish', () => {
-        child_process.spawnSync(
-          'hdiutil', ['attach', this.KITE_DMG_PATH]);
-        child_process.spawnSync(
-          'cp', ['-r', this.KITE_APP_PATH.mounted, this.APPS_PATH]);
-        child_process.spawnSync(
-          'hdiutil', ['detach', this.KITE_VOLUME_PATH]);
-        child_process.spawnSync(
-          'rm', [this.KITE_DMG_PATH]);
-        resolve();
+        mount();
       });
       resp.pipe(file);
     };
