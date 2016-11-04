@@ -6,17 +6,14 @@ var Client = require('./client.js');
 var utils = require('./utils.js');
 
 var AccountManager = {
-  HOSTNAME: atom.config.get('kite.hostname'),
-  PORT: atom.config.get('kite.port'),
-  SSL: atom.config.get('kite.ssl'),
-  SESSION_FILE_PATH: process.env.HOME + '/.kite/session.json',
-
-  client: new Client(this.HOSTNAME, this.PORT, '/api/account', this.SSL),
-
-  createAccount: function(data, opts={}) {
+  createAccount: function(data, callback) {
     if (!data.email) {
       throw new Error("No email provided");
     }
+    var hostname = atom.config.get('kite.hostname');
+    var port = atom.config.get('kite.port');
+    var ssl = atom.config.get('kite.ssl');
+    var client = new Client(hostname, port, '/api/account', ssl);
     var content = querystring.stringify(data);
     return client.request({
       path: '/createPasswordless',
@@ -25,7 +22,7 @@ var AccountManager = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(content),
       },
-    }, opts.callback, content);
+    }, callback, content);
   },
 
   login: function(data, opts={}) {
@@ -35,6 +32,10 @@ var AccountManager = {
     if (!data.password) {
       throw new Error("No password provided");
     }
+    var hostname = atom.config.get('kite.hostname');
+    var port = atom.config.get('kite.port');
+    var ssl = atom.config.get('kite.ssl');
+    var client = new Client(hostname, port, '/api/account', ssl);
     var content = querystring.stringify(data);
     return client.request({
       path: '/login',

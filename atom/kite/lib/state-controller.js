@@ -42,8 +42,8 @@ var StateController = {
 
   isKiteInstalled: function() {
     return new Promise((resolve, reject) => {
-      this.isKiteSupported().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteSupported().catch((err) => {
+        reject(err);
       }).then(() => {
         var ls = child_process.spawnSync('ls', [this.KITE_APP_PATH.installed]);
         ls.stdout.length !== 0 ?
@@ -55,12 +55,12 @@ var StateController = {
 
   canInstallKite: function() {
     return new Promise((resolve, reject) => {
-      this.isKiteSupported().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteSupported().catch((err) => {
+        reject(err);
       }).then(() => {
         this.isKiteInstalled().then(() => {
-          reject({ type: 'bad_state', data: this.states.INSTALLED });
-        }).catch((state) => {
+          reject({ type: 'bad_state', data: this.STATES.INSTALLED });
+        }).catch((err) => {
           resolve();
         });
       });
@@ -94,8 +94,8 @@ var StateController = {
     };
 
     return new Promise((resolve, reject) => {
-      this.canInstallKite().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.canInstallKite().catch((err) => {
+        reject(err);
       }).then(() => {
         https.get(url, (resp) => {
           handle(resp, resolve, reject);
@@ -108,8 +108,8 @@ var StateController = {
 
   isKiteRunning: function() {
     return new Promise((resolve, reject) => {
-      this.isKiteInstalled().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteInstalled().catch((err) => {
+        reject(err);
       }).then(() => {
         var ps = child_process.spawnSync('/bin/ps', ['-axco', 'command'], {
           encoding: 'utf8',
@@ -124,22 +124,22 @@ var StateController = {
 
   canRunKite: function() {
     return new Promise((resolve, reject) => {
-      this.isKiteInstalled().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteInstalled().catch((err) => {
+        reject(err);
       }).then(() => {
         this.isKiteRunning().then(() => {
           reject({ type: 'bad_state', data: this.STATES.RUNNING });
-        }).catch((state) => {
+        }).catch((err) => {
           resolve();
-        })
+        });
       });
     });
   },
 
   runKite: function() {
     return new Promise((resolve, reject) => {
-      this.canRunKite().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.canRunKite().catch((err) => {
+        reject(err);
       }).then(() => {
         child_process.spawnSync('open', ['-a', this.KITE_APP_PATH.installed]);
         resolve();
@@ -165,21 +165,21 @@ var StateController = {
     };
 
     return new Promise((resolve, reject) => {
-      this.isKiteRunning().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteRunning().catch((err) => {
+        reject(err);
       }).then(() => {
         this.client.request({
           path: '/api/account/authenticated',
           method: 'GET',
         }, (resp) => handle(resp, resolve, reject));
-      })
+      });
     });
   },
 
   canAuthenticateUser: function() {
     return new Promise((resolve, reject) => {
-      this.isKiteRunning().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteRunning().catch((err) => {
+        reject(err);
       }).then(() => {
         this.isUserAuthenticated().then(() => {
           reject({ type: 'bad_state', data: this.STATES.AUTHENTICATED });
@@ -205,8 +205,8 @@ var StateController = {
     };
 
     return new Promise((resolve, reject) => {
-      this.canAuthenticateUser().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.canAuthenticateUser().catch((err) => {
+        reject(err);
       }).then(() => {
         var content = querystring.stringify({
           email: email,
@@ -248,8 +248,8 @@ var StateController = {
     };
 
     return new Promise((resolve, reject) => {
-      this.isKiteRunning().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isKiteRunning().catch((err) => {
+        reject(err);
       }).then(() => {
         this.client.request({
           path: '/clientapi/settings/inclusions',
@@ -261,12 +261,12 @@ var StateController = {
 
   canWhitelistPath: function(path) {
     return new Promise((resolve, reject) => {
-      this.isUserAuthenticated().catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.isUserAuthenticated().catch((err) => {
+        reject(err);
       }).then(() => {
         this.isPathWhitelisted(path).then(() => {
           reject({ type: 'bad_state', data: this.STATES.WHITELISTED });
-        }).catch((state) => {
+        }).catch((err) => {
           resolve();
         });
       });
@@ -283,8 +283,8 @@ var StateController = {
     };
 
     return new Promise((resolve, reject) => {
-      this.canWhitelistPath(path).catch((state) => {
-        reject({ type: 'bad_state', data: state });
+      this.canWhitelistPath(path).catch((err) => {
+        reject(err);
       }).then(() => {
         var content = querystring.stringify({
           inclusions: path,
@@ -303,8 +303,12 @@ var StateController = {
 
   handleState: function(path) {
     return new Promise((resolve, reject) => {
-      this.isPathWhitelisted(path).catch((state) => {
-        resolve(state);
+      this.isPathWhitelisted(path).catch((err) => {
+        if (err.type === 'bad_state') {
+          resolve(err.data);
+        } else {
+          reject(err);
+        }
       }).then(() => {
         resolve(this.STATES.WHITELISTED);
       });

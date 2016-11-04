@@ -11,15 +11,15 @@ var InstallForm = class {
     this.status = document.createElement('div');
     this.element.appendChild(this.status);
 
-    let submitBtn = document.createElement('button');
-    submitBtn.textContent = "Install Kite";
-    submitBtn.onclick = listeners.submit;
-    this.element.appendChild(submitBtn);
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.textContent = "Install Kite";
+    this.submitBtn.onclick = listeners.submit;
+    this.element.appendChild(this.submitBtn);
 
-    let closeBtn = document.createElement('button');
-    closeBtn.textContent = "Close";
-    closeBtn.onclick = listeners.close;
-    this.element.appendChild(closeBtn);
+    this.closeBtn = document.createElement('button');
+    this.closeBtn.textContent = "Close";
+    this.closeBtn.onclick = listeners.close;
+    this.element.appendChild(this.closeBtn);
   }
 
   destroy() {
@@ -36,6 +36,10 @@ var InstallForm = class {
 
   setStatus(text) {
     this.status.textContent = text;
+  }
+
+  onSubmit(func) {
+    this.submitBtn.onclick = func;
   }
 };
 

@@ -18,11 +18,10 @@ var InstallFlow = class {
     this.element = document.createElement('div');
     this.element.classList.add('install-flow');
     this.element.classList.add('native-key-bindings');
-    this.element.classList.add('native-key-bindings');
 
     this.state = InstallFlow.STATES.STARTED;
 
-    this.installForm = new InstallForm({}, []);
+    this.installForm = new InstallForm({});
     this.element.appendChild(this.installForm.element);
 
     this.createAccountForm = new CreateAccountForm({}, ['hidden']);
@@ -43,6 +42,22 @@ var InstallFlow = class {
     this.element.remove();
   }
 
+  onInstall(func) {
+    this.installForm.onSubmit(func);
+  }
+
+  onCreateAccount(func) {
+    this.createAccountForm.onSubmit(func);
+  }
+
+  onLogin(func) {
+    this.loginForm.onSubmit(func);
+  }
+
+  onWhitelist(func) {
+    this.whitelistForm.onSubmit(func);
+  }
+
   clickInstall(email=null) {
     if (this.state !== InstallFlow.STATES.STARTED) {
       return;
@@ -53,6 +68,10 @@ var InstallFlow = class {
     }
     this.createAccountForm.show();
     this.state = InstallFlow.STATES.CREATE_ACCOUNT;
+  }
+
+  finishedInstall() {
+    this.installForm.setStatus("Done installing!");
   }
 
   showLogin() {

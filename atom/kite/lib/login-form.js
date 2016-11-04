@@ -20,15 +20,15 @@ var LoginForm = class {
     this.password.placeholder = 'Password';
     form.appendChild(this.password);
 
-    let submitBtn = document.createElement('button');
-    submitBtn.textContent = "Login";
-    submitBtn.onclick = listeners.submit;
-    this.element.appendChild(submitBtn);
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.textContent = "Login";
+    this.submitBtn.onclick = listeners.submit;
+    this.element.appendChild(this.submitBtn);
 
-    let closeBtn = document.createElement('button');
-    closeBtn.textContent = "Close";
-    closeBtn.onclick = listeners.close;
-    this.element.appendChild(closeBtn);
+    this.closeBtn = document.createElement('button');
+    this.closeBtn.textContent = "Close";
+    this.closeBtn.onclick = listeners.close;
+    this.element.appendChild(this.closeBtn);
   }
 
   destroy() {
@@ -45,6 +45,10 @@ var LoginForm = class {
 
   setEmail(email) {
     this.email.value = email;
+  }
+
+  onSubmit(func) {
+    this.submitBtn.onclick = func;
   }
 
   get data() {

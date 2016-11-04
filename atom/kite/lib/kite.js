@@ -12,6 +12,7 @@ var os = require('os');
 var utils = require('./utils.js');
 var completions = require('./completions.js');
 
+var Installer = require('./installer.js');
 var InstallFlow = require('./install-flow.js');
 var StateController = require('./state-controller.js');
 
@@ -360,7 +361,12 @@ module.exports = {
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
     this.installFlow = new InstallFlow();
+    this.installer = new Installer();
+    this.installer.init(this.installFlow);
+
+    window.state = StateController;
     window.flow = this.installFlow;
+    window.installer = this.installer;
 
     var pane = atom.workspace.getActivePane();
     atom.views.addViewProvider(TestModel, findModel);

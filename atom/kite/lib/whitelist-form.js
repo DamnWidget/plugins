@@ -8,15 +8,15 @@ var WhitelistForm = class {
     let form = document.createElement('form');
     this.element.appendChild(form);
 
-    let submitBtn = document.createElement('button');
-    submitBtn.textContent = "Enable access";
-    submitBtn.onclick = listeners.submit;
-    this.element.appendChild(submitBtn);
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.textContent = "Enable access";
+    this.submitBtn.onclick = listeners.submit;
+    this.element.appendChild(this.submitBtn);
 
-    let closeBtn = document.createElement('button');
-    closeBtn.textContent = "Close";
-    closeBtn.onclick = listeners.close;
-    this.element.appendChild(closeBtn);
+    this.closeBtn = document.createElement('button');
+    this.closeBtn.textContent = "Close";
+    this.closeBtn.onclick = listeners.close;
+    this.element.appendChild(this.closeBtn);
   }
 
   destroy() {
@@ -29,6 +29,10 @@ var WhitelistForm = class {
 
   show() {
     this.element.classList.remove('hidden');
+  }
+
+  onSubmit(func) {
+    this.submitBtn.onclick = func;
   }
 };
 
