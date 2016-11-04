@@ -12,8 +12,7 @@ var os = require('os');
 var utils = require('./utils.js');
 var completions = require('./completions.js');
 
-var CreateAccountForm = require('./create-account-form.js');
-var AccountManager = require('./account-manager.js');
+var InstallFlow = require('./install-flow.js');
 var StateController = require('./state-controller.js');
 
 var DEBUG = false;
@@ -347,8 +346,8 @@ module.exports = {
   outgoing: KiteOutgoing,
   incoming: KiteIncoming,
 
-  accountForm: null,
-  formPanel: null,
+  installFlow: null,
+  installFlowPanel: null,
 
   activate: function(state) {
     this.incoming.initialize();
@@ -360,32 +359,24 @@ module.exports = {
     // focus is tracked at the workspace level.
     atom.workspace.onDidChangeActivePaneItem(this.outgoing.onFocus.bind(this.outgoing));
 
-    this.accountForm = new CreateAccountForm(state.accountFormState, {
-      submit: this.submit.bind(this),
-      close: this.hideForm.bind(this),
-    });
+    this.installFlow = new InstallFlow();
+    window.flow = this.installFlow;
 
     var pane = atom.workspace.getActivePane();
     atom.views.addViewProvider(TestModel, findModel);
 
     StateController.canInstallKite().then(() => {
-      this.formPanel = atom.workspace.addRightPanel({
-        item: this.accountForm.element,
+      this.installFlowPanel = atom.workspace.addRightPanel({
+        item: this.installFlow.element,
         visible: true,
       });
     });
   },
 
   deactivate: function() {
-    if (this.formPanel) {
-      this.formPanel.destroy();
+    if (this.installFlowPanel) {
+      this.installFlowPanel.destroy();
     }
-  },
-
-  serialize: function() {
-    return {
-      accountFormState: this.accountForm.serialize(),
-    };
   },
 
   submit: function() {
@@ -396,8 +387,8 @@ module.exports = {
     });
   },
 
-  hideForm: function() {
-    this.formPanel.hide();
+  hidePanel: function() {
+    this.installFlowPanel.hide();
   },
 
   completions: function() {

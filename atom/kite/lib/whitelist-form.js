@@ -1,8 +1,9 @@
 var WhitelistForm = class {
-  constructor(state, listeners) {
+  constructor(listeners, classes=[]) {
     this.element = document.createElement('div');
     this.element.classList.add('whitelist-form');
     this.element.classList.add('native-key-bindings');
+    classes.forEach((c) => this.element.classList.add(c));
 
     let form = document.createElement('form');
     this.element.appendChild(form);
@@ -18,10 +19,16 @@ var WhitelistForm = class {
     this.element.appendChild(closeBtn);
   }
 
-  serialize() { }
-
   destroy() {
     this.element.remove();
+  }
+
+  hide() {
+    this.element.classList.add('hidden');
+  }
+
+  show() {
+    this.element.classList.remove('hidden');
   }
 };
 

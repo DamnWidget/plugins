@@ -1,9 +1,9 @@
 var LoginForm = class {
-  constructor(state, listeners) {
+  constructor(listeners, classes=[]) {
     this.element = document.createElement('div');
-    this.element.classList.add('account-form')
+    this.element.classList.add('login-form');
     this.element.classList.add('native-key-bindings');
-    this.element.classList.add('login');
+    classes.forEach((c) => this.element.classList.add(c));
 
     let form = document.createElement('form');
     this.element.appendChild(form);
@@ -31,10 +31,16 @@ var LoginForm = class {
     this.element.appendChild(closeBtn);
   }
 
-  serialize() { }
-
   destroy() {
     this.element.remove();
+  }
+
+  hide() {
+    this.element.classList.add('hidden');
+  }
+
+  show() {
+    this.element.classList.remove('hidden');
   }
 
   setEmail(email) {

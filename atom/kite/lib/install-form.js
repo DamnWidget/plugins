@@ -1,11 +1,15 @@
-var InstallKiteForm = class {
-  constructor(state, listeners) {
+var InstallForm = class {
+  constructor(listeners, classes=[]) {
     this.element = document.createElement('div');
-    this.element.classList.add('install-kite-form');
+    this.element.classList.add('install-form');
     this.element.classList.add('native-key-bindings');
+    classes.forEach((c) => this.element.classList.add(c));
 
     let form = document.createElement('form');
     this.element.appendChild(form);
+
+    this.status = document.createElement('div');
+    this.element.appendChild(this.status);
 
     let submitBtn = document.createElement('button');
     submitBtn.textContent = "Install Kite";
@@ -18,11 +22,21 @@ var InstallKiteForm = class {
     this.element.appendChild(closeBtn);
   }
 
-  serialize() { }
-
   destroy() {
     this.element.remove();
   }
+
+  hide() {
+    this.element.classList.add('hidden');
+  }
+
+  show() {
+    this.element.classList.remove('hidden');
+  }
+
+  setStatus(text) {
+    this.status.textContent = text;
+  }
 };
 
-module.exports = InstallKiteForm;
+module.exports = InstallForm;
