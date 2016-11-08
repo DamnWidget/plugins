@@ -388,7 +388,7 @@ module.exports = {
   submit: function() {
     StateController.installKiteRelease().then(() => {
       console.log("finished installing Kite!");
-    }).catch((err) => {
+    }, (err) => {
       console.log(`install error: ${ err.type }`);
     });
   },

@@ -6,7 +6,7 @@ const utils = require('./utils.js');
 
 var Installer = class {
   static get INTERVAL() {
-    return 500;
+    return 1000;
   }
 
   constructor() {
@@ -31,25 +31,25 @@ var Installer = class {
       this.flow.finishedInstall();
       StateController.runKite().then(() => {
         console.log("Kite running!");
-      }).catch((err) => {
+      }, (err) => {
         console.log("can't run Kite", err);
         this.kiteCanRun = false;
       });
-    }).catch((err) => {
+    }, (err) => {
       console.error(`error installing kite: ${ err.type }`);
     });
   }
 
   attemptAuthenticate() {
-    var data = this.flow.loginForm.data;
     var auth = () => {
+      var data = this.flow.loginForm.data;
       if (!this.kiteCanRun) {
         console.log("kite can't run - aborting");
         return;
       }
       StateController.authenticateUser(data.email, data.password).then(() => {
         console.log("successfully authenticated!");
-      }).catch((err) => {
+      }, (err) => {
         this.attemptAuthenticate();
       });
     };
@@ -127,7 +127,7 @@ var Installer = class {
 
     var p = StateController.whitelistPath(paths[0]).then(() => {
       this.flow.whitelisted();
-    }).catch((err) => {
+    }, (err) => {
 
     });
   }
