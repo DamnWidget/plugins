@@ -5,6 +5,10 @@ const StateController = require('./state-controller.js');
 const utils = require('./utils.js');
 
 var Installer = class {
+  static get INTERVAL() {
+    return 500;
+  }
+
   constructor() {
     this.flow = null;
   }
@@ -15,6 +19,10 @@ var Installer = class {
     this.flow.onCreateAccount(this.createAccount.bind(this));
     this.flow.onLogin(this.login.bind(this));
     this.flow.onWhitelist(this.whitelist.bind(this));
+
+    this.kiteCanRun = true;
+    this.authTimerID = null;
+    this.whitelistTimerID = null;
   }
 
   install() {
@@ -25,10 +33,31 @@ var Installer = class {
         console.log("Kite running!");
       }).catch((err) => {
         console.log("can't run Kite", err);
+        this.kiteCanRun = false;
       });
     }).catch((err) => {
       console.error(`error installing kite: ${ err.type }`);
     });
+  }
+
+  attemptAuthenticate() {
+    var data = this.flow.loginForm.data;
+    var auth = () => {
+      if (!this.kiteCanRun) {
+        console.log("kite can't run - aborting");
+        return;
+      }
+      StateController.authenticateUser(data.email, data.password).then(() => {
+        console.log("successfully authenticated!");
+      }).catch((err) => {
+        this.attemptAuthenticate();
+      });
+    };
+
+    console.log("attempting to authenticate...");
+    this.authTimerID = setTimeout(() => {
+      auth();
+    }, this.INTERVAL);
   }
 
   createAccount() {
@@ -37,7 +66,7 @@ var Installer = class {
       var req = AccountManager.createAccount(data, (resp) => {
         switch (resp.statusCode) {
         case 200:
-          this.accountValidated();
+          this.flow.accountValidated();
           break;
         case 409:
           this.flow.showLogin();
@@ -56,7 +85,8 @@ var Installer = class {
     var handle = (resp) => {
       switch (resp.statusCode) {
       case 200:
-        this.accountValidated();
+        this.flow.accountValidated();
+        this.attemptAuthenticate();
         break;
       case 401:
         utils.handleResponseData(resp, (raw) => {

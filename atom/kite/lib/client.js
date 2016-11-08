@@ -14,7 +14,9 @@ var Client = class {
 
   request(opts, callback, data=null) {
     opts.hostname = this.hostname;
-    opts.port = this.port;
+    if (this.port > 0) {
+      opts.port = this.port;
+    }
     opts.path = this.base + opts.path;
     opts.headers = opts.headers || {};
     this.writeCookies(opts.headers);

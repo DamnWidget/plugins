@@ -418,7 +418,7 @@ module.exports = {
       type: 'integer',
       default: 9090,
       title: "Kite Host Port",
-      description: "Port of Kite server",
+      description: "Port of Kite server (set to -1 to omit)",
     },
     ssl: {
       type: 'boolean',

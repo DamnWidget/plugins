@@ -214,7 +214,7 @@ var StateController = {
   },
 
   authenticateUser: function(email, password) {
-    var handle = (resp, reject) => {
+    var handle = (resp, resolve, reject) => {
       switch (resp.statusCode) {
       case 200:
         resolve();
