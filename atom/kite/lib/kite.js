@@ -385,18 +385,6 @@ module.exports = {
     }
   },
 
-  submit: function() {
-    StateController.installKiteRelease().then(() => {
-      console.log("finished installing Kite!");
-    }, (err) => {
-      console.log(`install error: ${ err.type }`);
-    });
-  },
-
-  hidePanel: function() {
-    this.installFlowPanel.hide();
-  },
-
   completions: function() {
     return completions;
   },

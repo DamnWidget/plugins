@@ -101,7 +101,8 @@ var InstallFlow = class {
     if (this.state !== InstallFlow.STATES.WHITELIST) {
       return;
     }
-    this.whitelistForm.hide();
+    this.whitelistForm.setFinished(
+      "You're all set once Kite is finished installing");
     this.state = InstallFlow.STATES.WHITELISTED;
   }
 };

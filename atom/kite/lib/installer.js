@@ -40,26 +40,6 @@ var Installer = class {
     });
   }
 
-  attemptAuthenticate() {
-    var auth = () => {
-      var data = this.flow.loginForm.data;
-      if (!this.kiteCanRun) {
-        console.log("kite can't run - aborting");
-        return;
-      }
-      StateController.authenticateUser(data.email, data.password).then(() => {
-        console.log("successfully authenticated!");
-      }, (err) => {
-        this.attemptAuthenticate();
-      });
-    };
-
-    console.log("attempting to authenticate...");
-    this.authTimerID = setTimeout(() => {
-      auth();
-    }, this.INTERVAL);
-  }
-
   createAccount() {
     try {
       var data = this.flow.createAccountForm.data;
@@ -118,18 +98,55 @@ var Installer = class {
     }
   }
 
+  attemptAuthenticate() {
+    var auth = () => {
+      var data = this.flow.loginForm.data;
+      if (!this.kiteCanRun) {
+        console.log("kite can't run - aborting authenticate");
+        return;
+      }
+      StateController.authenticateUser(data.email, data.password).then(() => {
+        console.log("successfully authenticated!");
+      }, (err) => {
+        console.log("authenticate error:", err);
+        this.attemptAuthenticate();
+      });
+    };
+
+    console.log("attempting to authenticate...");
+    this.authTimerID = setTimeout(() => {
+      auth();
+    }, this.INTERVAL);
+  }
+
   whitelist() {
-    var paths = atom.project.getPaths();
-    if (!paths.length) {
-      this.flow.whitelisted();
-      return;
-    }
+    this.flow.whitelisted();
+    this.attemptWhitelist();
+  }
 
-    var p = StateController.whitelistPath(paths[0]).then(() => {
-      this.flow.whitelisted();
-    }, (err) => {
+  attemptWhitelist() {
+    var whitelist = () => {
+      if (!this.kiteCanRun) {
+        console.log("kite can't run - aborting whitelist");
+        return;
+      }
+      var paths = atom.project.getPaths();
+      if (!paths.length) {
+        console.log("no project paths - aborting whitelist");
+        return;
+      }
+      StateController.whitelistPath(paths[0]).then(() => {
+        console.log("successfully whitelisted!");
+      }, (err) => {
+        console.log("whitelist error:", err);
+        this.attemptWhitelist();
+      });
+    };
 
-    });
+    console.log("attempting to whitelist...");
+    this.whitelistTimerID = setTimeout(() => {
+      whitelist();
+    }, this.INTERVAL);
   }
 
   getUserEmail() {

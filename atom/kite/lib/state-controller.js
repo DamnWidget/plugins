@@ -201,11 +201,7 @@ var StateController = {
   canAuthenticateUser: function() {
     return new Promise((resolve, reject) => {
       this.isKiteRunning().then(() => {
-        this.isUserAuthenticated().then(() => {
-          reject({ type: 'bad_state', data: this.STATES.AUTHENTICATED });
-        }).catch(() => {
-          resolve();
-        });
+        resolve();
       }, (err) => {
         reject(err);
       });

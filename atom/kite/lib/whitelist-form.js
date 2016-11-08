@@ -8,15 +8,22 @@ var WhitelistForm = class {
     let form = document.createElement('form');
     this.element.appendChild(form);
 
+    this.finished = document.createElement('div');
+    this.finished.classList.add('hidden');
+    this.element.appendChild(this.finished);
+
+    this.btnContainer = document.createElement('div');
+    this.element.appendChild(this.btnContainer);
+
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = "Enable access";
     this.submitBtn.onclick = listeners.submit;
-    this.element.appendChild(this.submitBtn);
+    this.btnContainer.appendChild(this.submitBtn);
 
     this.closeBtn = document.createElement('button');
     this.closeBtn.textContent = "Close";
     this.closeBtn.onclick = listeners.close;
-    this.element.appendChild(this.closeBtn);
+    this.btnContainer.appendChild(this.closeBtn);
   }
 
   destroy() {
@@ -29,6 +36,12 @@ var WhitelistForm = class {
 
   show() {
     this.element.classList.remove('hidden');
+  }
+
+  setFinished(text) {
+    this.finished.textContent = text;
+    this.btnContainer.classList.add('hidden');
+    this.finished.classList.remove('hidden');
   }
 
   onSubmit(func) {
