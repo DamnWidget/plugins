@@ -14,6 +14,11 @@ var CreateAccountForm = class {
     this.email.placeholder = 'Email';
     form.appendChild(this.email);
 
+    this.error = document.createElement('div');
+    this.error.classList.add('error');
+    this.error.classList.add('hidden');
+    this.element.appendChild(this.error);
+
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = "Sign up";
     this.submitBtn.onclick = listeners.submit;
@@ -39,6 +44,16 @@ var CreateAccountForm = class {
 
   setEmail(email) {
     this.email.value = email;
+  }
+
+  showError(text) {
+    this.error.textContent = text;
+    this.error.classList.remove('hidden');
+  }
+
+  hideError() {
+    this.error.textContent = "";
+    this.error.classList.add('hidden');
   }
 
   onSubmit(func) {

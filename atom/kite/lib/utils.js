@@ -57,8 +57,17 @@ function dumpCookies(cookies) {
   return cookies.map((c) => c.Name + '=' + c.Value).join('; ');
 }
 
+function handleResponseData(resp, callback) {
+  var data = '';
+  resp.on('data', (chunk) => data += chunk);
+  resp.on('end', () => {
+    callback(data);
+  });
+}
+
 module.exports = {
   pointToOffset: pointToOffset,
   parseSetCookies: parseSetCookies,
   dumpCookies: dumpCookies,
+  handleResponseData: handleResponseData,
 };

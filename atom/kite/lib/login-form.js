@@ -20,6 +20,11 @@ var LoginForm = class {
     this.password.placeholder = 'Password';
     form.appendChild(this.password);
 
+    this.error = document.createElement('div');
+    this.error.classList.add('error');
+    this.error.classList.add('hidden');
+    this.element.appendChild(this.error);
+
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = "Login";
     this.submitBtn.onclick = listeners.submit;
@@ -45,6 +50,16 @@ var LoginForm = class {
 
   setEmail(email) {
     this.email.value = email;
+  }
+
+  showError(text) {
+    this.error.textContent = text;
+    this.error.classList.remove('hidden');
+  }
+
+  hideError() {
+    this.error.textContent = "";
+    this.error.classList.add('hidden');
   }
 
   onSubmit(func) {

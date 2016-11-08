@@ -92,7 +92,7 @@ var KiteOutgoing = {
       send.stderr.on('data', (data) => {
         console.log('udswrite stderr: ', String(data));
       });
-      send.on('close', (code) =>{
+      send.on('close', (code) => {
         console.log('udswrite exit code: ', code);
       });
     }

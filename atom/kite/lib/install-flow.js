@@ -1,7 +1,7 @@
-var InstallForm = require('./install-form.js');
-var CreateAccountForm = require('./create-account-form.js');
-var LoginForm = require('./login-form.js');
-var WhitelistForm = require('./whitelist-form.js');
+const InstallForm = require('./install-form.js');
+const CreateAccountForm = require('./create-account-form.js');
+const LoginForm = require('./login-form.js');
+const WhitelistForm = require('./whitelist-form.js');
 
 var InstallFlow = class {
   static get STATES() {

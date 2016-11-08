@@ -1,10 +1,11 @@
-var child_process = require('child_process');
-var fs = require('fs');
-var https = require('https');
-var os = require('os');
-var querystring = require('querystring');
+const child_process = require('child_process');
+const fs = require('fs');
+const https = require('https');
+const os = require('os');
+const querystring = require('querystring');
 
-var Client = require('./client.js');
+const Client = require('./client.js');
+const utils = require('./utils.js');
 
 var StateController = {
   client: new Client('127.0.0.1', 46624, '', false),
@@ -141,7 +142,7 @@ var StateController = {
         var procs = ps.stdout.split('\n');
         procs.indexOf('Kite') !== -1 ?
           resolve() :
-          reject({ type: 'bad_state', data: this.state.INSTALLED });
+          reject({ type: 'bad_state', data: this.STATES.INSTALLED });
       });
     });
   },
@@ -177,10 +178,8 @@ var StateController = {
         reject({ type: 'bad_status', data: resp.statusCode });
         return;
       }
-      var raw = '';
-      resp.on('data', (chunk) => raw += chunk);
-      resp.on('end', () => {
-        if (raw === 'authenticated') {
+      utils.handleResponseData(resp, (data) => {
+        if (data === 'authenticated') {
           resolve();
         } else {
           reject({ type: 'unauthenticated' });
@@ -253,14 +252,12 @@ var StateController = {
       if (resp.statusCode !== 200) {
         reject({ type: 'bad_status', data: resp.statusCode });
       }
-      var raw = '';
-      resp.on('data', (chunk) => raw += chunk);
-      resp.on('end', () => {
+      utils.handleResponseData(resp, (data) => {
         var whitelisted = false;
         try {
-          var dirs = JSON.parse(raw);
+          var dirs = JSON.parse(data);
           whitelisted = dirs.indexOf(path) !== -1;
-        } catch(e) {
+        } catch (e) {
           whitelisted = false;
         }
         if (whitelisted) {

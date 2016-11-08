@@ -25,7 +25,7 @@ var AccountManager = {
     }, callback, content);
   },
 
-  login: function(data, opts={}) {
+  login: function(data, callback) {
     if (!data.email) {
       throw new Error("No email provided");
     }
@@ -44,14 +44,15 @@ var AccountManager = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(content),
       },
-    }, opts.callback, content);
+    }, callback, content);
   },
 
-  saveSession: function(resp) {
-    var cks = utils.parseSetCookies(resp.headers['set-cookie']);
-    fs.writeFileSync(this.SESSION_FILE_PATH, JSON.stringify(cks, null, 2), {
+  saveSession: function(resp, callback) {
+    var cookies = utils.parseSetCookies(resp.headers['set-cookie']);
+    var data = JSON.stringify(cookies, null, 2);
+    fs.writeFile(this.SESSION_FILE_PATH, data, {
       mode: 0o755,
-    });
+    }, callback);
   }
 };
 
