@@ -18,19 +18,21 @@ var InstallFlow = class {
     this.element = document.createElement('div');
     this.element.classList.add('install-flow');
     this.element.classList.add('native-key-bindings');
+    classes.push('install-flow-step');
 
     this.state = InstallFlow.STATES.STARTED;
 
-    this.installForm = new InstallForm({});
+    this.installForm = new InstallForm({}, classes);
     this.element.appendChild(this.installForm.element);
 
-    this.createAccountForm = new CreateAccountForm({}, ['hidden']);
+    var hidden = classes.concat(['hidden']);
+    this.createAccountForm = new CreateAccountForm({}, hidden);
     this.element.appendChild(this.createAccountForm.element);
 
-    this.loginForm = new LoginForm({}, ['hidden']);
+    this.loginForm = new LoginForm({}, hidden);
     this.element.appendChild(this.loginForm.element);
 
-    this.whitelistForm = new WhitelistForm({}, ['hidden']);
+    this.whitelistForm = new WhitelistForm({}, hidden);
     this.element.appendChild(this.whitelistForm.element);
   }
 
