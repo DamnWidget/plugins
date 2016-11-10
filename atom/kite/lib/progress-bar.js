@@ -15,12 +15,14 @@ var ProgressBar = class {
     this.setPercentage();
     this.element.appendChild(this.percentage);
 
+    this.finished = null;
     this.timerID = null;
   }
 
   setPercentage() {
     if (this.progress === 100) {
       this.percentage.classList.add('finished');
+      this.status.textContent = this.finished;
     } else {
       this.percentage.classList.remove('finished');
     }
@@ -28,30 +30,34 @@ var ProgressBar = class {
   }
 
   increment(delta) {
-    if (this.progress <= 0 || this.progress >= 100) {
+    if (delta <= 0 || this.progress >= 100) {
       return;
     }
-    this.progress = Math.max(0, Math.min(100, this.progress + delta));
+    this.progress = Math.min(100, this.progress + delta);
     this.setPercentage();
   }
 
-  step(delta, interval) {
-    var incr = () => {
-      this.increment(delta);
-      if (this.progress < 100) {
-        this.step(delta, interval);
-      }
+  start(duration, interval, finished=null) {
+    var step = (delta) => {
+      var increment = () => {
+        this.increment(delta);
+        if (this.progress < 100) {
+          step(delta);
+        }
+      };
+      this.timerID = setTimeout(() => increment(), interval);
     };
-    this.timerID = setTimeout(() => {
-      incr();
-    }, interval);
+    if (this.progress < 100) {
+      this.finished = finished;
+      var delta = interval * (100 - this.progress) / duration;
+      step(delta, interval);
+    }
   }
 
-  finishProgress(duration, interval) {
-    if (this.progress < 100) {
-      var delta = interval * (100 - this.progress) / duration;
-      this.step(delta, interval);
-    }
+  reset(status) {
+    this.status.textContent = status;
+    this.progress = 0;
+    this.setPercentage();
   }
 };
 
