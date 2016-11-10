@@ -1,5 +1,70 @@
 @import "variables";
 
+div.inline {
+  display: inline-block;
+}
+
+div.row {
+  display: flex;
+  flex-direction: row;
+  &.vertical-align {
+    align-items: center;
+  }
+}
+
 .install-flow {
+  color: @white;
   width: 480px;
+
+  .install-flow-step {
+    padding: 1.5rem 2rem;
+
+    &.install-form {
+      .row.cta-row {
+        justify-content: space-between;
+
+        .logo {
+          background-image: url('atom://kite/styles/logo.png');
+          background-repeat: no-repeat;
+          background-size: contain;
+          height: 40px;
+          width: 100px;
+        }
+
+        .cta-btn {
+          background-color: @cta-green;
+          border: none;
+          border-radius: 0.3rem;
+          font-size: 1.2rem;
+          padding: 0.5rem 5rem;
+        }
+      }
+
+      .progress-bar {
+        background-color: @cta-green-deactivated;
+        border-radius: 0.3rem;
+        height: @progress-bar-height;
+        position: relative;
+        width: 360px;
+
+        .progress-bar-status {
+          height: @progress-bar-height;
+          line-height: @progress-bar-height;
+          position: relative;
+          text-align: center;
+          width: 100%;
+          z-index: 2;
+        }
+
+        .progress-bar-percentage {
+          background-color: @cta-green;
+          bottom: 0;
+          height: @progress-bar-height;
+          left: 0;
+          position: absolute;
+          z-index: 1;
+        }
+      }
+    }
+  }
 }

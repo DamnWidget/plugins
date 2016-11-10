@@ -1,3 +1,5 @@
+const ProgressBar = require('./progress-bar.js');
+
 var InstallForm = class {
   constructor(listeners, classes=[]) {
     this.element = document.createElement('div');
@@ -5,21 +7,28 @@ var InstallForm = class {
     this.element.classList.add('native-key-bindings');
     classes.forEach((c) => this.element.classList.add(c));
 
-    let form = document.createElement('form');
-    this.element.appendChild(form);
+    let ctaRow = document.createElement('div');
+    ctaRow.classList.add('row');
+    ctaRow.classList.add('vertical-align');
+    ctaRow.classList.add('cta-row');
+    this.element.appendChild(ctaRow);
+
+    let logo = document.createElement('div');
+    logo.classList.add('inline');
+    logo.classList.add('logo');
+    ctaRow.appendChild(logo);
+
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.classList.add('cta-btn');
+    this.submitBtn.textContent = "Enable Kite";
+    this.submitBtn.onclick = listeners.submit;
+    ctaRow.appendChild(this.submitBtn);
 
     this.status = document.createElement('div');
     this.element.appendChild(this.status);
 
-    this.submitBtn = document.createElement('button');
-    this.submitBtn.textContent = "Install Kite";
-    this.submitBtn.onclick = listeners.submit;
-    this.element.appendChild(this.submitBtn);
-
-    this.closeBtn = document.createElement('button');
-    this.closeBtn.textContent = "Close";
-    this.closeBtn.onclick = listeners.close;
-    this.element.appendChild(this.closeBtn);
+    this.progress = new ProgressBar('Installing...');
+    this.element.appendChild(this.progress.element);
   }
 
   destroy() {
