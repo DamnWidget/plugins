@@ -34,7 +34,7 @@ div.row {
         .cta-btn {
           background-color: @cta-green;
           border: none;
-          border-radius: 0.3rem;
+          border-radius: @border-radius;
           font-size: 1.2rem;
           padding: 0.5rem 5rem;
         }
@@ -42,7 +42,7 @@ div.row {
 
       .progress-bar {
         background-color: @cta-green-deactivated;
-        border-radius: 0.3rem;
+        border-radius: @border-radius;
         height: @progress-bar-height;
         position: relative;
         width: 360px;
@@ -58,11 +58,15 @@ div.row {
 
         .progress-bar-percentage {
           background-color: @cta-green;
+          border-radius: @border-radius 0 0 @border-radius;
           bottom: 0;
           height: @progress-bar-height;
           left: 0;
           position: absolute;
           z-index: 1;
+          &.finished {
+            border-radius: @border-radius;
+          }
         }
       }
     }
