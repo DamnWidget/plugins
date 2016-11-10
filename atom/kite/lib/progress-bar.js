@@ -34,6 +34,25 @@ var ProgressBar = class {
     this.progress = Math.max(0, Math.min(100, this.progress + delta));
     this.setPercentage();
   }
+
+  step(delta, interval) {
+    var incr = () => {
+      this.increment(delta);
+      if (this.progress < 100) {
+        this.step(delta, interval);
+      }
+    };
+    this.timerID = setTimeout(() => {
+      incr();
+    }, interval);
+  }
+
+  finishProgress(duration, interval) {
+    if (this.progress < 100) {
+      var delta = interval * (100 - this.progress) / duration;
+      this.step(delta, interval);
+    }
+  }
 };
 
 module.exports = ProgressBar;
